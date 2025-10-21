@@ -1,0 +1,14 @@
+{
+  "num_nodes": 90,
+  "num_edges": 760,
+  "stage_1_size": 30,
+  "stage_2_size": 30,
+  "stage_3_size": 30,
+  "S1->S2": 824,
+  "S2->S3": 852,
+  "S1->S3": 900,
+  "p_global": 0.25,
+  "p_intra": 0.25,
+  "allow_stage_skip": false,
+  "seed": 42
+}

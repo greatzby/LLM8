@@ -1,0 +1,29 @@
+{
+  "train_samples": 30622,
+  "test_samples": 1067,
+  "train_paths_per_pair": 20,
+  "eval_paths_per_pair": 1,
+  "train_ratio": 0.5,
+  "seed": 42,
+  "pair_counts": {
+    "S1->S2": 824,
+    "S1->S3": 900,
+    "S2->S3": 852
+  },
+  "sample_counts": {
+    "train": {
+      "S1->S2": 10528,
+      "__total__": 30622,
+      "S1->S3": 9000,
+      "S2->S3": 11094
+    },
+    "test": {
+      "S1->S2": 308,
+      "__total__": 1067,
+      "S1->S3": 450,
+      "S2->S3": 309
+    },
+    "train_pairs": 1509,
+    "test_pairs": 1067
+  }
+}
