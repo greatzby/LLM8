@@ -130,7 +130,7 @@ def make_output_dir(args: argparse.Namespace) -> Path:
 def main() -> None:
     args = parse_args()
     if args.p_intra is None:
-        args.p_intra = max(min(args.p_global / 2.0, 1.0), 0.0)
+        args.p_intra = args.p_global
 
     random.seed(args.seed)
     np.random.seed(args.seed)
