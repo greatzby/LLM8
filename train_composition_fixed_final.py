@@ -78,6 +78,7 @@ def evaluate_composition(
     vocab_size: int,
     temperature: float = 0.1,
     top_k: int = 10,
+    verbose: bool = False,
 ) -> Dict[str, Dict[str, float]]:
     """Evaluate composition accuracy per path type plus overall."""
     model.eval()
@@ -149,7 +150,7 @@ def evaluate_composition(
                         else:
                             valid = True
 
-            if idx < 3:  # optional debug
+            if verbose and idx < 3:
                 status = "✓" if valid else "✗"
                 print(f"[Eval-{path_type}] {status} {source}->{target}: {generated_path}")
 
@@ -388,6 +389,7 @@ def main() -> None:
                 vocab_size=vocab_size,
                 temperature=args.temperature,
                 top_k=args.top_k,
+                verbose=False,
             )
 
             if node_token_ids and train_lines:
