@@ -29,7 +29,6 @@ import networkx as nx
 import numpy as np
 from tqdm import tqdm
 
-
 Node = str
 Pair = Tuple[Node, Node]
 
@@ -161,57 +160,70 @@ def create_dataset(
     train_paths_per_pair: int,
     eval_paths_per_pair: int,
     max_path_attempts: int,
-) -> tuple[List[List[int]], List[List[int]], dict]:
+) -> tuple[List[List[int]], List[List[int]], Dict[str, Dict[str, int]]]:
     train_samples: List[List[int]] = []
     test_samples: List[List[int]] = []
 
-    summary_counts = {
+    sample_counts_by_split: Dict[str, defaultdict[str, int]] = {
         "train": defaultdict(int),
         "test": defaultdict(int),
-        "train_pairs": len(train_pairs),
-        "test_pairs": len(test_pairs),
     }
 
-    stage_sets = [set(stage) for stage in stages]
     pair_type_cache: Dict[Pair, str] = {}
 
-    def record_sample(target_list: List[List[int]], pair: Pair, path: List[int]) -> None:
-        src_int, dst_int = path[0], path[-1]
-        pair_type = pair_type_cache.get(pair)
-        if pair_type is None:
-            pair_type = classify_pair(src_int, dst_int, stages)
+    def get_pair_type(pair: Pair) -> str:
+        if pair not in pair_type_cache:
+            src_str, dst_str = pair
+            pair_type = classify_pair(int(src_str), int(dst_str), stages)
             pair_type_cache[pair] = pair_type or "Other"
-        summary_counts[target]["total"] = summary_counts[target].get("total", 0) + 1
-        summary_counts[target][pair_type] += 1
-        target_list.append([src_int, dst_int] + path)
+        return pair_type_cache[pair]
+
+    def record_sample(
+        container: List[List[int]],
+        pair: Pair,
+        path: Sequence[int],
+        split: str,
+    ) -> None:
+        src_int = int(pair[0])
+        dst_int = int(pair[1])
+        path_int = [int(node) for node in path]
+        sample = [src_int, dst_int] + path_int
+        container.append(sample)
+
+        pair_type = get_pair_type(pair)
+        sample_counts_by_split[split][pair_type] += 1
+        sample_counts_by_split[split]["__total__"] += 1
 
     # Training samples
     for source, target in tqdm(train_pairs, desc="Generating training samples"):
-        # Always add the direct edge as one sample if it exists
+        pair = (source, target)
         if G.has_edge(source, target):
             direct_path = [int(source), int(target)]
-            record_sample(train_samples, (source, target), direct_path)
+            record_sample(train_samples, pair, direct_path, "train")
 
         for _ in range(train_paths_per_pair):
             path = generate_random_path(
                 G, source, target, reachability_cache, max_attempts=max_path_attempts
             )
             if path is not None:
-                record_sample(train_samples, (source, target), path)
+                record_sample(train_samples, pair, path, "train")
 
     # Testing samples
     for source, target in tqdm(test_pairs, desc="Generating eval samples"):
+        pair = (source, target)
         for _ in range(eval_paths_per_pair):
             path = generate_random_path(
                 G, source, target, reachability_cache, max_attempts=max_path_attempts
             )
             if path is not None:
-                record_sample(test_samples, (source, target), path)
+                record_sample(test_samples, pair, path, "test")
 
     random.shuffle(train_samples)
     random.shuffle(test_samples)
 
-    return train_samples, test_samples, summary_counts
+    # Convert defaultdicts to plain dict for serialization
+    sample_counts_dict = {split: dict(counts) for split, counts in sample_counts_by_split.items()}
+    return train_samples, test_samples, sample_counts_dict
 
 
 def write_dataset(lines: Iterable[List[int]], file_path: Path) -> None:
@@ -291,8 +303,10 @@ def main() -> None:
         "seed": args.seed,
         "pair_counts": {k: len(v) for k, v in pairs_by_type.items()},
         "sample_counts": {
-            "train": dict(sample_counts["train"]),
-            "test": dict(sample_counts["test"]),
+            "train": sample_counts["train"],
+            "test": sample_counts["test"],
+            "train_pairs": len(train_pairs),
+            "test_pairs": len(test_pairs),
         },
     }
 
