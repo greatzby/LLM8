@@ -3,9 +3,8 @@
 """
 GPT training script for GraphA Tier-3 datasets.
 
-Key additions vs previous version:
+Key features:
   * --train_paths_per_pair argument to load matching train_XX.bin.
-  * Weight gap computation (difference between true next-token logits and sampled negatives).
   * Metrics logging to JSONL for easy plotting.
   * Stratified accuracy reporting (S1->S2 / S2->S3 / S1->S3) plus overall.
 
@@ -56,10 +55,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--learning_rate", type=float, default=5e-4)
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--weight_gap_neg_samples", type=int, default=20,
-                        help="Negative samples per step when computing weight gap.")
-    parser.add_argument("--weight_gap_lines", type=int, default=4000,
-                        help="Maximum lines sampled from train.txt for weight gap.")
     parser.add_argument("--temperature", type=float, default=0.1)
     parser.add_argument("--top_k", type=int, default=10)
     parser.add_argument("--grad_clip", type=float, default=1.0)
@@ -177,67 +172,6 @@ def evaluate_composition(
     return results
 
 
-@torch.no_grad()
-def compute_weight_gap(
-    model: GPT,
-    sample_lines: List[str],
-    stoi: Dict[str, int],
-    device: torch.device,
-    neg_sample_ids: List[int],
-    max_lines: int,
-    neg_samples_per_step: int,
-) -> Dict[str, float]:
-    """Compute average logit gap between true next token and sampled negatives."""
-    model.eval()
-    random.shuffle(sample_lines)
-    lines = sample_lines[:max_lines]
-
-    true_logits: List[float] = []
-    neg_logits: List[float] = []
-
-    for line in lines:
-        tokens = line.strip().split()
-        try:
-            token_ids = [stoi[token] for token in tokens]
-        except KeyError:
-            continue
-        token_ids.append(stoi["\n"])
-        if len(token_ids) < 3:
-            continue
-
-        for idx in range(2, len(token_ids)):
-            prefix = token_ids[:idx]
-            target_id = token_ids[idx]
-            if target_id not in stoi.values():
-                continue
-
-            prefix_tensor = torch.tensor(prefix, dtype=torch.long, device=device).unsqueeze(0)
-            logits, _ = model(prefix_tensor, None)
-            step_logits = logits[0, -1, :]
-
-            true_logit = step_logits[target_id].item()
-            true_logits.append(true_logit)
-
-            neg_candidates = [nid for nid in neg_sample_ids if nid != target_id]
-            if not neg_candidates:
-                continue
-            sampled = random.sample(
-                neg_candidates, min(neg_samples_per_step, len(neg_candidates))
-            )
-            neg_logit = step_logits[sampled].mean().item()
-            neg_logits.append(neg_logit)
-
-    model.train()
-
-    result = {
-        "num_steps": len(true_logits),
-        "avg_true_logit": float(np.mean(true_logits)) if true_logits else float("nan"),
-        "avg_neg_logit": float(np.mean(neg_logits)) if neg_logits else float("nan"),
-    }
-    result["weight_gap"] = result["avg_true_logit"] - result["avg_neg_logit"]
-    return result
-
-
 def get_batch(
     data: np.memmap,
     block_size: int,
@@ -291,7 +225,6 @@ def main() -> None:
     with open(data_dir / "stage_info.pkl", "rb") as f:
         stage_info = pickle.load(f)
     stages = stage_info["stages"]
-    total_nodes = sum(len(stage) for stage in stages)
 
     with open(data_dir / "meta.pkl", "rb") as f:
         meta = pickle.load(f)
@@ -316,22 +249,6 @@ def main() -> None:
 
     G = nx.read_graphml(data_dir / "composition_graph.graphml")
     test_file = data_dir / "test.txt"
-
-    # Load train text lines for weight gap
-    train_text_file = data_dir / f"train_{args.train_paths_per_pair}.txt"
-    if train_text_file.exists():
-        with open(train_text_file, "r", encoding="utf-8") as f:
-            train_lines = [line.strip() for line in f if line.strip()]
-    else:
-        train_lines = []
-        logger.warning("Train text file not found; weight gap computation will be skipped.")
-
-    # Node token IDs (exclude PAD/newline)
-    node_token_ids = []
-    for node_idx in range(total_nodes):
-        token_str = str(node_idx)
-        if token_str in stoi:
-            node_token_ids.append(stoi[token_str])
 
     model_args = dict(
         vocab_size=vocab_size,
@@ -392,31 +309,12 @@ def main() -> None:
                 verbose=False,
             )
 
-            if node_token_ids and train_lines:
-                weight_gap_stats = compute_weight_gap(
-                    model=model,
-                    sample_lines=train_lines,
-                    stoi=stoi,
-                    device=device,
-                    neg_sample_ids=node_token_ids,
-                    max_lines=args.weight_gap_lines,
-                    neg_samples_per_step=args.weight_gap_neg_samples,
-                )
-            else:
-                weight_gap_stats = {
-                    "num_steps": 0,
-                    "avg_true_logit": float("nan"),
-                    "avg_neg_logit": float("nan"),
-                    "weight_gap": float("nan"),
-                }
-
             metrics_record = {
                 "iter": iter_num,
                 "lr": lr,
                 "train_loss": avg_train_loss,
                 "val_loss": val_loss,
                 "accuracy": results,
-                "weight_gap": weight_gap_stats,
             }
             with open(metrics_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(metrics_record) + "\n")
@@ -433,13 +331,6 @@ def main() -> None:
                     stats.get("correct", 0),
                     stats.get("total", 0),
                 )
-            logger.info(
-                "Weight gap: gap=%.4f (true=%.4f, neg=%.4f, steps=%d)",
-                weight_gap_stats["weight_gap"],
-                weight_gap_stats["avg_true_logit"],
-                weight_gap_stats["avg_neg_logit"],
-                weight_gap_stats["num_steps"],
-            )
             logger.info("=" * 70)
 
             running_loss = 0.0
