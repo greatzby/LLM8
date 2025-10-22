@@ -1,0 +1,11 @@
+{
+  "target_ratio": 0.0,
+  "actual_ratio": 0.0,
+  "total_pairs": 1127,
+  "kept_p13_pairs": 0,
+  "kept_p0_pairs": 1127,
+  "paths_per_pair": 20,
+  "source_index": 0,
+  "target_index": -1,
+  "seed": 2025
+}
