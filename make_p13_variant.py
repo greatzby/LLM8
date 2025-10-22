@@ -66,15 +66,36 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def normalize_stage_nodes(nodes: Sequence) -> List[str]:
+    """Convert stage node identifiers to strings (match path tokens)."""
+    result = []
+    for node in nodes:
+        if isinstance(node, (int, float)):
+            result.append(str(int(node)))
+        else:
+            result.append(str(node))
+    return result
+
+
 def infer_stage_sets(stage_info: dict) -> Dict[str, Sequence[str]]:
     """Try best-effort extraction of tier node sets."""
+
+    # --- Case 1: stage_info has "stages" list (GraphA generator output) ---
+    stages = stage_info.get("stages")
+    if isinstance(stages, (list, tuple)) and len(stages) >= 3:
+        return {
+            "s1": normalize_stage_nodes(stages[0]),
+            "s3": normalize_stage_nodes(stages[2]),
+        }
+
+    # --- Case 2: generic dict-of-dicts (tier1/tier2/etc.) ---
     candidates = []
     for key, value in stage_info.items():
         if isinstance(value, dict) and len(value) >= 3:
             canonical = {}
             for sub_key, sub_val in value.items():
                 if isinstance(sub_val, (list, tuple, set)):
-                    canonical[str(sub_key).lower()] = [str(x) for x in sub_val]
+                    canonical[str(sub_key).lower()] = normalize_stage_nodes(sub_val)
             if len(canonical) >= 3:
                 candidates.append(canonical)
 
@@ -121,9 +142,16 @@ def load_stage_sets(args: argparse.Namespace) -> Tuple[set, set]:
     with open(stage_path, "rb") as f:
         stage_info = pickle.load(f)
 
+    if not isinstance(stage_info, dict):
+        raise TypeError(
+            f"stage_info.pkl must contain a dict, but got {type(stage_info).__name__}"
+        )
+
     tiers = infer_stage_sets(stage_info)
     s1 = set(tiers["s1"])
     s3 = set(tiers["s3"])
+    if not s1 or not s3:
+        raise ValueError("Parsed S1 or S3 node sets are empty.")
     return s1, s3
 
 
