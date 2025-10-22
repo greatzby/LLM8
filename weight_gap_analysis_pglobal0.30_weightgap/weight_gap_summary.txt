@@ -1,0 +1,23 @@
+Weight Gap Analysis Summary (pglobal0.30_weightgap)
+Generated at: 2025-10-22 11:51:52
+Checkpoint directory: out/composition_20251021_124209
+Data directory:       data/datasets/graphA_pg030_tier3
+Stages: S1=30, S2=30, S3=30
+Graph edges: S1→S2=251, S2→S3=281, S1→S3=0
+
+Iterations analyzed:
+  Iter   5000: edge=  0.096520  non_edge= -0.001338  gap=  0.097858
+  Iter  10000: edge=  0.126626  non_edge= -0.009210  gap=  0.135836
+  Iter  15000: edge=  0.153419  non_edge= -0.014571  gap=  0.167990
+  Iter  20000: edge=  0.177134  non_edge= -0.018883  gap=  0.196017
+  Iter  25000: edge=  0.198790  non_edge= -0.022239  gap=  0.221029
+  Iter  30000: edge=  0.219845  non_edge= -0.024947  gap=  0.244792
+  Iter  35000: edge=  0.239967  non_edge= -0.027340  gap=  0.267308
+  Iter  40000: edge=  0.256792  non_edge= -0.028731  gap=  0.285524
+  Iter  45000: edge=  0.274764  non_edge= -0.029831  gap=  0.304595
+  Iter  50000: edge=  0.292736  non_edge= -0.030733  gap=  0.323469
+
+Summary statistics (excluding NaNs):
+  Edge     : min=0.096520, max=0.292736, mean=0.203659
+  Non-Edge : min=-0.030733, max=-0.001338, mean=-0.020782
+  Gap      : min=0.097858, max=0.323469, mean=0.224442
