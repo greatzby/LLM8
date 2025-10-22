@@ -5,13 +5,13 @@ Create control splits with specific P13 ratio from GraphA tier-3 dataset.
 
 Example usage:
 
-  python scripts/make_p13_variant.py \
+  python make_p13_variant.py \
       --src-dir data/datasets/graphA_pg030_tier3 \
       --dest-dir data/datasets/graphA_pg030_tier3_P13_0 \
       --target-ratio 0.0 \
       --paths-per-pair 20
 
-  python scripts/make_p13_variant.py \
+  python make_p13_variant.py \
       --src-dir data/datasets/graphA_pg030_tier3 \
       --dest-dir data/datasets/graphA_pg030_tier3_P13_20 \
       --target-ratio 0.2 \
@@ -20,7 +20,6 @@ Example usage:
 """
 import argparse
 import json
-import math
 import random
 import shutil
 from pathlib import Path
@@ -36,29 +35,34 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--paths-per-pair", type=int, default=20,
                         help="Used to locate train_{K}.txt.")
     parser.add_argument("--target-ratio", type=float, required=True,
-                        help="Desired fraction of (s,t) pairs with s∈S1, t∈S3.")
+                        help="Fraction of (s,t) pairs with s∈S1, t∈S3 after subsampling.")
     parser.add_argument("--stage-info-name", type=str, default="stage_info.pkl",
                         help="Stage info file name inside src-dir.")
     parser.add_argument("--train-file-pattern", type=str, default="train_{paths}.txt",
-                        help="Format string for training file.")
+                        help="Format string for the training file.")
     parser.add_argument("--source-index", type=int, default=0,
                         help="Token index for source node (supports negative index).")
     parser.add_argument("--target-index", type=int, default=-1,
                         help="Token index for target node (supports negative index).")
     parser.add_argument("--s1-nodes", type=str, default=None,
-                        help="Optional comma-separated list of S1 node ids. Overrides auto-detect.")
+                        help="Comma-separated list of S1 node ids (overrides auto-detect).")
     parser.add_argument("--s3-nodes", type=str, default=None,
-                        help="Optional comma-separated list of S3 node ids. Overrides auto-detect.")
+                        help="Comma-separated list of S3 node ids (overrides auto-detect).")
     parser.add_argument("--seed", type=int, default=2025, help="Random seed for subsampling.")
-    parser.add_argument("--copy-patterns", nargs="*", default=[
-        "composition_graph.graphml",
-        "dataset_summary.json",
-        "meta.pkl",           # will be regenerated later, but copy just in case
-        "stage_info.pkl",
-        "test.txt",
-        "val.bin",
-        "train_{paths}.bin",  # probably stale; remove after regeneration
-    ], help="Files to copy from src to dest if they exist.")
+    parser.add_argument(
+        "--copy-patterns",
+        nargs="*",
+        default=[
+            "composition_graph.graphml",
+            "dataset_summary.json",
+            "meta.pkl",
+            "stage_info.pkl",
+            "test.txt",
+            "val.bin",
+            "train_{paths}.bin",
+        ],
+        help="Files (or directories) to copy from src to dest if they exist.",
+    )
     return parser.parse_args()
 
 
@@ -67,7 +71,6 @@ def infer_stage_sets(stage_info: dict) -> Dict[str, Sequence[str]]:
     candidates = []
     for key, value in stage_info.items():
         if isinstance(value, dict) and len(value) >= 3:
-            # check if dict has tier-like keys
             canonical = {}
             for sub_key, sub_val in value.items():
                 if isinstance(sub_val, (list, tuple, set)):
@@ -81,9 +84,7 @@ def infer_stage_sets(stage_info: dict) -> Dict[str, Sequence[str]]:
             "Please supply --s1-nodes/--s3-nodes manually."
         )
 
-    # pick the first candidate
     tiers = candidates[0]
-    # heuristics for key names
     aliases = {
         "s1": ["s1", "tier1", "stage1", "cluster1"],
         "s3": ["s3", "tier3", "stage3", "cluster3"],
@@ -106,7 +107,7 @@ def infer_stage_sets(stage_info: dict) -> Dict[str, Sequence[str]]:
 
 
 def load_stage_sets(args: argparse.Namespace) -> Tuple[set, set]:
-    if args.s1-nodes and args.s3-nodes:
+    if args.s1_nodes and args.s3_nodes:
         s1 = {token.strip() for token in args.s1_nodes.split(",") if token.strip()}
         s3 = {token.strip() for token in args.s3_nodes.split(",") if token.strip()}
         if not s1 or not s3:
@@ -127,7 +128,6 @@ def load_stage_sets(args: argparse.Namespace) -> Tuple[set, set]:
 
 
 def canonical_token(token: str) -> str:
-    """Normalize token string (remove padding, newline placeholders, etc.)."""
     return token.strip()
 
 
@@ -136,7 +136,6 @@ def resolve_index(tokens: List[str], index: int) -> str:
         if index >= len(tokens):
             raise IndexError(f"Token index {index} out of range for tokens {tokens}")
         return tokens[index]
-    # negative index
     resolved = len(tokens) + index
     if resolved < 0:
         raise IndexError(f"Token index {index} out of range for tokens {tokens}")
@@ -179,13 +178,11 @@ def compute_subset_sizes(
     orig_ratio = n_p13 / (n_p13 + n_p0)
 
     if target_ratio <= orig_ratio:
-        # drop some P13, keep all P0
         keep_p0 = n_p0
         desired_p13 = target_ratio * keep_p0 / (1 - target_ratio)
         keep_p13 = min(n_p13, int(round(desired_p13)))
         return keep_p13, keep_p0
 
-    # target_ratio > orig_ratio: drop some P0, keep all P13
     keep_p13 = n_p13
     desired_p0 = keep_p13 * (1 - target_ratio) / target_ratio
     keep_p0 = min(n_p0, int(round(desired_p0)))
@@ -220,7 +217,6 @@ def copy_side_files(args: argparse.Namespace) -> None:
             shutil.copy2(src, dst)
         elif src.is_dir():
             shutil.copytree(src, dst, dirs_exist_ok=True)
-        # silently skip if neither file nor dir (e.g., glob). Adjust if needed.
 
 
 def main() -> None:
