@@ -404,6 +404,7 @@ def main():
     parser.add_argument("--threshold", type=float, default=0.0, help="Threshold for binarizing W_M when computing precision/recall/F1.")
     parser.add_argument("--save_matrix", action="store_true", help="Save W_M, A_true, and difference as .npy files.")
     parser.add_argument("--include_diff", action="store_true", help="Also plot the heatmap of W_M - A_true.")
+    parser.add_argument("--fig_title", type=str, default=None, help="Custom title for the heatmap figure.")
     args = parser.parse_args()
 
     if not os.path.isdir(args.checkpoint_dir):
@@ -439,7 +440,11 @@ def main():
         output_dir = f"adjacency_heatmap_{os.path.basename(os.path.abspath(args.checkpoint_dir))}"
     os.makedirs(output_dir, exist_ok=True)
 
-    fig_title = f"{config.model_name} — Iter {iteration}"
+    if args.fig_title:
+        fig_title = args.fig_title
+    else:
+        fig_title = f"{config.model_name} — Iter {iteration}"
+
     plot_path = os.path.join(output_dir, f"adjacency_heatmap_iter_{iteration}.png")
     plot_heatmaps(
         A_sub,
