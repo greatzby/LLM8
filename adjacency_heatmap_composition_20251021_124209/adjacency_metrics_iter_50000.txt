@@ -1,5 +1,5 @@
 Adjacency Comparison Summary
-Generated at: 2025-10-24 22:04:48
+Generated at: 2025-10-24 22:27:31
 
 Checkpoint: out/composition_20251021_124209/ckpt_50000.pt
 Iteration : 50000
