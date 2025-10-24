@@ -1,0 +1,20 @@
+Adjacency Comparison Summary
+Generated at: 2025-10-24 22:04:48
+
+Checkpoint: out/composition_20251021_124209/ckpt_50000.pt
+Iteration : 50000
+Data dir  : /userhome/cs3/u3612899/LLM8/data/datasets/graphA_pg030_tier3
+
+Threshold : 0.0000
+MSE       : 0.147133
+MAE       : 0.288170
+Max |Δ|   : 1.496197
+Corr      : 0.326279
+
+TP        : 720
+FP        : 2842
+FN        : 197
+TN        : 4251
+Precision : 0.202134
+Recall    : 0.785169
+F1        : 0.321500
