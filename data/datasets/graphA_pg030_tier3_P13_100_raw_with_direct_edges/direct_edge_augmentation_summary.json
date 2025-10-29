@@ -1,0 +1,16 @@
+{
+  "operation": "add_direct_edges",
+  "mode": "copied",
+  "source_dir": "/userhome/cs3/u3612899/LLM8/data/datasets/graphA_pg030_tier3_P13_100_raw",
+  "work_dir": "/userhome/cs3/u3612899/LLM8/data/datasets/graphA_pg030_tier3_P13_100_raw_with_direct_edges",
+  "train_file": "train_20.txt",
+  "graph_path": "/userhome/cs3/u3612899/LLM8/data/datasets/graphA_pg030_tier3_P13_100_raw_with_direct_edges/composition_graph.graphml",
+  "train_samples_before": 9000,
+  "train_samples_after": 9917,
+  "edges_in_graph": 917,
+  "edges_already_present": 0,
+  "edges_added": 917,
+  "shuffle_added": false,
+  "seed": null,
+  "timestamp": "2025-10-29T20:46:55"
+}
