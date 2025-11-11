@@ -1,0 +1,35 @@
+{
+  "target_ratio": 0.0,
+  "ratios": {
+    "original_pairs": 0.3244274809160305,
+    "original_paths": 0.32060012991639253,
+    "kept_pairs": 0.0,
+    "kept_paths": 0.0
+  },
+  "counts": {
+    "original": {
+      "pairs_total": 2358,
+      "pairs_p13": 765,
+      "pairs_p0": 1593,
+      "paths_total": 47723,
+      "paths_p13": 15300,
+      "paths_p0": 32423
+    },
+    "kept": {
+      "pairs_total": 1593,
+      "pairs_p13": 0,
+      "pairs_p0": 1593,
+      "paths_total": 32423,
+      "paths_p13": 0,
+      "paths_p0": 32423
+    }
+  },
+  "metadata": {
+    "paths_per_pair": 20,
+    "source_index": 0,
+    "target_index": -1,
+    "seed": 2025,
+    "train_file": "train_20.txt",
+    "pair_report": null
+  }
+}
