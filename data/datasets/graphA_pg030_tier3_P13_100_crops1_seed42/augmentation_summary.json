@@ -1,0 +1,33 @@
+{
+  "source_dir": "/userhome/cs3/u3612899/LLM8/data/datasets/graphA_pg030_tier3_P13_100_raw",
+  "dest_dir": "/userhome/cs3/u3612899/LLM8/data/datasets/graphA_pg030_tier3_P13_100_crops1_seed42",
+  "train_file": "train_20.txt",
+  "seed": 2025,
+  "keep_original": true,
+  "counts": {
+    "original_lines": 9000,
+    "prefix_crops": 8566,
+    "suffix_crops": 0,
+    "augmented_lines": 8566,
+    "final_lines": 17566
+  },
+  "parameters": {
+    "prefix_samples": 1,
+    "suffix_samples": 0,
+    "min_prefix_len": 3,
+    "max_prefix_len": 6,
+    "min_suffix_len": 3,
+    "max_suffix_len": 6,
+    "shuffle": true
+  },
+  "copy_patterns": [
+    "composition_graph.graphml",
+    "dataset_summary.json",
+    "stage_info.pkl",
+    "test.txt",
+    "val.bin",
+    "meta.pkl",
+    "train_{paths}.bin",
+    "p13_control_summary.json"
+  ]
+}
