@@ -216,6 +216,70 @@ def safe_max_new_tokens(block_size: int,
     return max(1, min(desired, available))
 
 
+def load_state_dict_with_block_resize(model: GPT,
+                                      raw_state_dict: Dict[str, Tensor],
+                                      ckpt_block_size: int,
+                                      logger) -> None:
+    """
+    允许在 block_size 扩大的情况下加载 checkpoint。
+    1. positional embedding 扩容并复制原权重；
+    2. 注意力 bias/mask 使用模型自身初始化（不从 ckpt 读）。
+    """
+    state_dict = dict(raw_state_dict)  # 浅拷贝，避免修改原始字典
+    model_block_size = model.config.block_size
+
+    if ckpt_block_size is None:
+        ckpt_block_size = model_block_size
+
+    if model_block_size == ckpt_block_size:
+        model.load_state_dict(state_dict, strict=True)
+        return
+
+    if model_block_size < ckpt_block_size:
+        raise ValueError(
+            f"Checkpoint block_size={ckpt_block_size} 大于当前模型 block_size={model_block_size}，"
+            "不能直接缩小。请使用更大的 block_size_override。"
+        )
+
+    logger.warning(
+        "扩容 block_size：checkpoint=%d -> 当前模型=%d。新位置的嵌入使用模型随机初始化。",
+        ckpt_block_size,
+        model_block_size,
+    )
+
+    wpe_key = "transformer.wpe.weight"
+    if wpe_key in state_dict:
+        old_weight = state_dict[wpe_key]
+        if old_weight.shape[0] != ckpt_block_size:
+            logger.warning(
+                "检查到 checkpoint 的 wpe.weight 行数 (%d) 与记录的 block_size (%d) 不一致。",
+                old_weight.shape[0], ckpt_block_size
+            )
+        new_weight = model.transformer.wpe.weight.detach().clone()
+        new_weight[:old_weight.size(0)] = old_weight
+        state_dict[wpe_key] = new_weight
+
+    bias_like = [
+        key for key in state_dict.keys()
+        if key.endswith("attn.bias") or key.endswith("attn.mask")
+    ]
+    for key in bias_like:
+        state_dict.pop(key)
+
+    missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
+
+    allowed_missing = set(
+        key for key in missing_keys
+        if key.endswith("attn.bias") or key.endswith("attn.mask")
+    )
+    leftover_missing = [k for k in missing_keys if k not in allowed_missing]
+    if leftover_missing:
+        logger.warning("加载 checkpoint 时缺失的键：%s", leftover_missing)
+
+    if unexpected_keys:
+        logger.warning("加载 checkpoint 时出现未识别的键：%s", unexpected_keys)
+
+
 # -----------------------------------------------------------------------------
 # 评估（记录三类路径准确率，保持与 SFT 对齐）
 # -----------------------------------------------------------------------------
@@ -423,12 +487,24 @@ def main() -> None:
 
     logger.info("Resolved model configuration: %s", json.dumps(model_args))
 
+    ckpt_block_size = ckpt_model_args.get("block_size", dataset_block_size)
+
     model = GPT(GPTConfig(**model_args)).to(device)
-    model.load_state_dict(ckpt["model"], strict=True)
+    load_state_dict_with_block_resize(
+        model=model,
+        raw_state_dict=ckpt["model"],
+        ckpt_block_size=ckpt_block_size,
+        logger=logger,
+    )
 
     if args.kl_coef > 0:
         base_model = GPT(GPTConfig(**model_args)).to(device)
-        base_model.load_state_dict(ckpt["model"], strict=True)
+        load_state_dict_with_block_resize(
+            model=base_model,
+            raw_state_dict=ckpt["model"],
+            ckpt_block_size=ckpt_block_size,
+            logger=logger,
+        )
         for p in base_model.parameters():
             p.requires_grad = False
         base_model.eval()
