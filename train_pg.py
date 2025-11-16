@@ -59,6 +59,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--seed", type=int, default=42)
 
+    # 模型结构可选覆盖
+    parser.add_argument("--n_layer", type=int, default=None,
+                        help="覆盖模型层数；默认从 checkpoint 读取。")
+    parser.add_argument("--n_head", type=int, default=None,
+                        help="覆盖注意力头数；默认从 checkpoint 读取。")
+    parser.add_argument("--n_embd", type=int, default=None,
+                        help="覆盖 embedding/hidden size；默认从 checkpoint 读取。")
+    parser.add_argument("--dropout", type=float, default=None,
+                        help="覆盖 dropout；默认从 checkpoint 读取。")
+    parser.add_argument("--bias", type=str, choices=["true", "false"], default=None,
+                        help="覆盖线性层是否带偏置；默认从 checkpoint 读取。")
+    parser.add_argument("--block_size_override", type=int, default=None,
+                        help="覆盖模型 block_size；默认使用 checkpoint 或数据集 meta。")
+
     # PG 超参数
     parser.add_argument("--max_iters", type=int, default=20000,
                         help="PG update 步数。")
@@ -72,7 +86,7 @@ def parse_args() -> argparse.Namespace:
                         help="优势项裁剪绝对值（<=0 表示不裁剪）。")
 
     parser.add_argument("--max_rollout_steps", type=int, default=32,
-                        help="每次 rollout 最多生成多少 token。")
+                        help="每次 rollout 最多生成多少 token（不含提示）。")
     parser.add_argument("--rollout_temperature", type=float, default=1.2,
                         help="rollout 温度，建议≥1 便于探索。")
     parser.add_argument("--rollout_top_k", type=int, default=0,
@@ -186,6 +200,22 @@ def prepare_output_dir(base_dir: str) -> Path:
     return out_dir
 
 
+def safe_max_new_tokens(block_size: int,
+                        prompt_len: int,
+                        desired: int) -> int:
+    """
+    计算在 block_size 限制下可用的最大新 token 数量（至少为 1）。
+    需要给终止 token 预留 1 个位置。
+    """
+    available = block_size - prompt_len - 1
+    if available <= 0:
+        raise ValueError(
+            f"Block size {block_size} is too small for prompt length {prompt_len}. "
+            "请增大 block_size（或在命令行使用 --block_size_override）"
+        )
+    return max(1, min(desired, available))
+
+
 # -----------------------------------------------------------------------------
 # 评估（记录三类路径准确率，保持与 SFT 对齐）
 # -----------------------------------------------------------------------------
@@ -203,6 +233,7 @@ def evaluate_model(model: GPT,
                    max_pairs: int = 5000) -> Dict[str, Dict[str, float]]:
     model.eval()
     stop_token_id = stoi["\n"]
+    block_size = model.config.block_size
 
     buckets: Dict[BucketName, List[Pair]] = {
         "S1->S2": [],
@@ -226,11 +257,13 @@ def evaluate_model(model: GPT,
                 stoi[str(target)],
                 stoi[str(source)],
             ]
+            max_new_tokens = safe_max_new_tokens(block_size, len(prompt_tokens), max_steps)
+
             x = torch.tensor(prompt_tokens, dtype=torch.long, device=device).unsqueeze(0)
 
             generated = model.generate(
                 x,
-                max_new_tokens=max_steps,
+                max_new_tokens=max_new_tokens,
                 temperature=temperature,
                 top_k=top_k if top_k > 0 else None,
             )[0].tolist()
@@ -307,10 +340,15 @@ def build_prompt(source: int,
 
 def build_traj_ids(prompt_ids: List[int],
                    sampled_ids: List[int],
-                   stop_token_id: int) -> List[int]:
+                   stop_token_id: int,
+                   block_size: int) -> List[int]:
     traj = prompt_ids + sampled_ids
+    if len(traj) >= block_size:
+        # 理论上不会发生（前面 safe_max_new_tokens 已限制），但这里还是兜底防御。
+        traj = traj[:block_size - 1]
     if not sampled_ids or sampled_ids[-1] != stop_token_id:
-        traj.append(stop_token_id)
+        if len(traj) < block_size:
+            traj.append(stop_token_id)
     return traj
 
 
@@ -336,7 +374,7 @@ def main() -> None:
     stoi: Dict[str, int] = meta["stoi"]
     itos: Dict[int, str] = meta["itos"]
     vocab_size = meta["vocab_size"]
-    block_size = meta["block_size"]
+    dataset_block_size = meta["block_size"]
 
     with open(data_dir / "stage_info.pkl", "rb") as f:
         stage_info = pickle.load(f)
@@ -350,23 +388,47 @@ def main() -> None:
     logger.info("Output directory: %s", out_dir)
     logger.info("KL coefficient: %.6f", args.kl_coef)
 
+    ckpt = torch.load(args.sft_checkpoint, map_location="cpu")
+    ckpt_model_args = ckpt.get("model_args", {})
+
+    def resolve_numeric(attr_name: str, ckpt_key: str, default_value):
+        cli_value = getattr(args, attr_name, None)
+        if cli_value is not None:
+            return cli_value
+        if ckpt_model_args and ckpt_key in ckpt_model_args:
+            return ckpt_model_args[ckpt_key]
+        return default_value
+
+    def resolve_bias(default_value: bool) -> bool:
+        if args.bias is not None:
+            return args.bias.lower() == "true"
+        if ckpt_model_args and "bias" in ckpt_model_args:
+            return bool(ckpt_model_args["bias"])
+        return default_value
+
+    resolved_block_size = resolve_numeric("block_size_override", "block_size", dataset_block_size)
+    if resolved_block_size != dataset_block_size:
+        logger.warning("Using block_size=%d (override / checkpoint) while dataset meta reports %d.",
+                       resolved_block_size, dataset_block_size)
+
     model_args = dict(
         vocab_size=vocab_size,
-        block_size=block_size,
-        n_layer=1,
-        n_head=1,
-        n_embd=92,
-        dropout=0.0,
-        bias=False,
+        block_size=resolved_block_size,
+        n_layer=resolve_numeric("n_layer", "n_layer", 1),
+        n_head=resolve_numeric("n_head", "n_head", 1),
+        n_embd=resolve_numeric("n_embd", "n_embd", 120),
+        dropout=resolve_numeric("dropout", "dropout", 0.0),
+        bias=resolve_bias(False),
     )
-    model = GPT(GPTConfig(**model_args)).to(device)
 
-    ckpt = torch.load(args.sft_checkpoint, map_location=device)
-    model.load_state_dict(ckpt["model"])
+    logger.info("Resolved model configuration: %s", json.dumps(model_args))
+
+    model = GPT(GPTConfig(**model_args)).to(device)
+    model.load_state_dict(ckpt["model"], strict=True)
 
     if args.kl_coef > 0:
         base_model = GPT(GPTConfig(**model_args)).to(device)
-        base_model.load_state_dict(ckpt["model"])
+        base_model.load_state_dict(ckpt["model"], strict=True)
         for p in base_model.parameters():
             p.requires_grad = False
         base_model.eval()
@@ -391,9 +453,18 @@ def main() -> None:
                 eval_pairs.append((int(parts[0]), int(parts[1])))
 
     stop_token_id = stoi["\n"]
-    action_start = 3
+    prompt_len = 3  # build_prompt 固定输出三个 token
+    action_start = prompt_len
     baseline_reward = 0.0
     metrics_path = out_dir / "metrics_pg.jsonl"
+
+    # 计算 block_size 限制下的 rollout 上限
+    rollout_cap = safe_max_new_tokens(model.config.block_size, prompt_len, args.max_rollout_steps)
+    if rollout_cap < args.max_rollout_steps:
+        logger.warning(
+            "Requested max_rollout_steps=%d 超出 block_size=%d 的容量，实际将截断为 %d。",
+            args.max_rollout_steps, model.config.block_size, rollout_cap
+        )
 
     model.train()
     bucket_names = ["S1->S2", "S2->S3", "S1->S3"]
@@ -415,9 +486,13 @@ def main() -> None:
             prompt_ids = build_prompt(source, target, stoi)
             x = torch.tensor(prompt_ids, dtype=torch.long, device=device).unsqueeze(0)
 
+            max_new_tokens = safe_max_new_tokens(
+                model.config.block_size, len(prompt_ids), args.max_rollout_steps
+            )
+
             generated_full = model.generate(
                 x,
-                max_new_tokens=args.max_rollout_steps,
+                max_new_tokens=max_new_tokens,
                 temperature=args.rollout_temperature,
                 top_k=args.rollout_top_k if args.rollout_top_k > 0 else None,
             )[0].tolist()
@@ -438,7 +513,7 @@ def main() -> None:
 
             path_lengths.append(len(path_nodes))
 
-            traj_ids = build_traj_ids(prompt_ids, sampled_ids, stop_token_id)
+            traj_ids = build_traj_ids(prompt_ids, sampled_ids, stop_token_id, model.config.block_size)
             logprob_sum, kl_sum = compute_logprob_and_kl(
                 model=model,
                 base_model=base_model,
