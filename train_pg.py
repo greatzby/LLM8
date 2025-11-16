@@ -355,7 +355,7 @@ def main() -> None:
         block_size=block_size,
         n_layer=1,
         n_head=1,
-        n_embd=120,
+        n_embd=92,
         dropout=0.0,
         bias=False,
     )
