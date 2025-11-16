@@ -1,0 +1,8 @@
+[2025-11-17 02:00:00,517][INFO] Policy Gradient training started.
+[2025-11-17 02:00:00,517][INFO] Output directory: out_pg/pg_20251117_020000
+[2025-11-17 02:00:00,518][INFO] KL coefficient: 0.000300
+[2025-11-17 02:00:00,519][WARNING] Using block_size=64 (override / checkpoint) while dataset meta reports 32.
+[2025-11-17 02:00:00,520][INFO] Resolved model configuration: {"vocab_size": 92, "block_size": 64, "n_layer": 1, "n_head": 1, "n_embd": 92, "dropout": 0.0, "bias": false}
+[2025-11-17 02:00:01,216][WARNING] 扩容 block_size：checkpoint=32 -> 当前模型=64。新位置的嵌入使用模型随机初始化。
+[2025-11-17 02:00:01,219][WARNING] 扩容 block_size：checkpoint=32 -> 当前模型=64。新位置的嵌入使用模型随机初始化。
+[2025-11-17 02:00:01,230][INFO] Loaded 1127 unique (source, target) pairs for PG training.

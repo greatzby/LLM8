@@ -1,0 +1,519 @@
+[2025-11-17 02:00:15,329][INFO] Policy Gradient training started.
+[2025-11-17 02:00:15,330][INFO] Output directory: out_pg/pg_20251117_020015
+[2025-11-17 02:00:15,330][INFO] KL coefficient: 0.000300
+[2025-11-17 02:00:15,331][WARNING] Using block_size=64 (override / checkpoint) while dataset meta reports 32.
+[2025-11-17 02:00:15,331][INFO] Resolved model configuration: {"vocab_size": 92, "block_size": 64, "n_layer": 1, "n_head": 1, "n_embd": 92, "dropout": 0.0, "bias": false}
+[2025-11-17 02:00:16,014][WARNING] 扩容 block_size：checkpoint=32 -> 当前模型=64。新位置的嵌入使用模型随机初始化。
+[2025-11-17 02:00:16,016][WARNING] 扩容 block_size：checkpoint=32 -> 当前模型=64。新位置的嵌入使用模型随机初始化。
+[2025-11-17 02:00:16,027][INFO] Loaded 1127 unique (source, target) pairs for PG training.
+[2025-11-17 02:00:43,503][INFO] Iter     50 | reward=0.000 | success=0.000 | avg_path=3.34 | pg_loss=-0.0000 | kl_loss=0.7849
+[2025-11-17 02:01:10,083][INFO] Iter    100 | reward=0.000 | success=0.000 | avg_path=3.56 | pg_loss=-0.0000 | kl_loss=0.6770
+[2025-11-17 02:01:37,360][INFO] Iter    150 | reward=0.000 | success=0.000 | avg_path=3.53 | pg_loss=-0.0000 | kl_loss=2.0182
+[2025-11-17 02:02:04,536][INFO] Iter    200 | reward=0.000 | success=0.000 | avg_path=3.69 | pg_loss=-0.0000 | kl_loss=2.6632
+[2025-11-17 02:02:31,246][INFO] Iter    250 | reward=0.000 | success=0.000 | avg_path=4.09 | pg_loss=-0.0001 | kl_loss=3.7199
+[2025-11-17 02:02:58,113][INFO] Iter    300 | reward=0.000 | success=0.000 | avg_path=3.66 | pg_loss=-0.1684 | kl_loss=5.2637
+[2025-11-17 02:03:24,973][INFO] Iter    350 | reward=0.000 | success=0.000 | avg_path=4.12 | pg_loss=-0.1669 | kl_loss=9.0241
+[2025-11-17 02:03:51,986][INFO] Iter    400 | reward=0.031 | success=0.031 | avg_path=4.56 | pg_loss=1.5545 | kl_loss=12.2177
+[2025-11-17 02:04:19,049][INFO] Iter    450 | reward=0.031 | success=0.031 | avg_path=5.47 | pg_loss=-0.5612 | kl_loss=17.2490
+[2025-11-17 02:04:46,035][INFO] Iter    500 | reward=0.031 | success=0.031 | avg_path=4.50 | pg_loss=-0.7190 | kl_loss=26.9114
+[2025-11-17 02:05:13,140][INFO] Iter    550 | reward=0.000 | success=0.000 | avg_path=5.34 | pg_loss=-0.0939 | kl_loss=32.2763
+[2025-11-17 02:05:40,078][INFO] Iter    600 | reward=0.031 | success=0.031 | avg_path=5.50 | pg_loss=-1.5980 | kl_loss=25.9780
+[2025-11-17 02:06:07,224][INFO] Iter    650 | reward=0.062 | success=0.062 | avg_path=5.09 | pg_loss=-2.5078 | kl_loss=30.3708
+[2025-11-17 02:06:34,361][INFO] Iter    700 | reward=0.031 | success=0.031 | avg_path=5.44 | pg_loss=-1.5139 | kl_loss=33.1883
+[2025-11-17 02:07:01,422][INFO] Iter    750 | reward=0.156 | success=0.156 | avg_path=5.00 | pg_loss=0.2734 | kl_loss=33.6153
+[2025-11-17 02:07:28,360][INFO] Iter    800 | reward=0.156 | success=0.156 | avg_path=5.50 | pg_loss=1.4107 | kl_loss=31.8203
+[2025-11-17 02:07:55,452][INFO] Iter    850 | reward=0.219 | success=0.219 | avg_path=5.44 | pg_loss=-1.3673 | kl_loss=32.4887
+[2025-11-17 02:08:22,496][INFO] Iter    900 | reward=0.188 | success=0.188 | avg_path=5.22 | pg_loss=0.6592 | kl_loss=30.8784
+[2025-11-17 02:08:49,896][INFO] Iter    950 | reward=0.281 | success=0.281 | avg_path=5.41 | pg_loss=0.5664 | kl_loss=41.8949
+[2025-11-17 02:09:17,334][INFO] Iter   1000 | reward=0.344 | success=0.344 | avg_path=5.06 | pg_loss=0.3185 | kl_loss=27.3269
+[2025-11-17 02:09:33,272][INFO] ---- Evaluation at iter 1000 ----
+[2025-11-17 02:09:33,272][INFO]   S1->S2: 61.15% (181 / 296)
+[2025-11-17 02:09:33,272][INFO]   S2->S3: 58.47% (176 / 301)
+[2025-11-17 02:09:33,272][INFO]   S1->S3: 1.33% (6 / 450)
+[2025-11-17 02:09:33,272][INFO]   overall: 34.67% (363 / 1047)
+[2025-11-17 02:10:00,418][INFO] Iter   1050 | reward=0.312 | success=0.312 | avg_path=4.62 | pg_loss=-0.0792 | kl_loss=23.5226
+[2025-11-17 02:10:27,436][INFO] Iter   1100 | reward=0.500 | success=0.500 | avg_path=5.34 | pg_loss=-3.5862 | kl_loss=29.7601
+[2025-11-17 02:10:54,543][INFO] Iter   1150 | reward=0.250 | success=0.250 | avg_path=5.09 | pg_loss=-8.3933 | kl_loss=28.3429
+[2025-11-17 02:11:21,618][INFO] Iter   1200 | reward=0.688 | success=0.688 | avg_path=5.84 | pg_loss=5.2443 | kl_loss=22.9352
+[2025-11-17 02:11:48,557][INFO] Iter   1250 | reward=0.562 | success=0.562 | avg_path=4.84 | pg_loss=-5.5682 | kl_loss=27.2542
+[2025-11-17 02:12:15,936][INFO] Iter   1300 | reward=0.719 | success=0.719 | avg_path=4.56 | pg_loss=-4.0702 | kl_loss=27.8495
+[2025-11-17 02:12:43,102][INFO] Iter   1350 | reward=0.594 | success=0.594 | avg_path=5.06 | pg_loss=-2.4666 | kl_loss=24.2951
+[2025-11-17 02:13:10,059][INFO] Iter   1400 | reward=0.750 | success=0.750 | avg_path=4.66 | pg_loss=1.3101 | kl_loss=24.7647
+[2025-11-17 02:13:37,139][INFO] Iter   1450 | reward=0.781 | success=0.781 | avg_path=4.97 | pg_loss=-0.1161 | kl_loss=23.4844
+[2025-11-17 02:14:04,134][INFO] Iter   1500 | reward=0.812 | success=0.812 | avg_path=5.03 | pg_loss=-1.2233 | kl_loss=26.2463
+[2025-11-17 02:14:31,194][INFO] Iter   1550 | reward=0.625 | success=0.625 | avg_path=4.38 | pg_loss=-4.3647 | kl_loss=26.0224
+[2025-11-17 02:14:58,124][INFO] Iter   1600 | reward=0.719 | success=0.719 | avg_path=5.12 | pg_loss=-6.1458 | kl_loss=24.3167
+[2025-11-17 02:15:25,239][INFO] Iter   1650 | reward=0.625 | success=0.625 | avg_path=4.34 | pg_loss=-7.7526 | kl_loss=27.3991
+[2025-11-17 02:15:52,117][INFO] Iter   1700 | reward=0.812 | success=0.812 | avg_path=4.28 | pg_loss=-1.1415 | kl_loss=27.7525
+[2025-11-17 02:16:18,803][INFO] Iter   1750 | reward=0.875 | success=0.875 | avg_path=4.72 | pg_loss=1.1825 | kl_loss=29.3233
+[2025-11-17 02:16:45,917][INFO] Iter   1800 | reward=0.906 | success=0.906 | avg_path=4.62 | pg_loss=2.8459 | kl_loss=27.8902
+[2025-11-17 02:17:12,904][INFO] Iter   1850 | reward=0.781 | success=0.781 | avg_path=5.34 | pg_loss=-2.7177 | kl_loss=28.8303
+[2025-11-17 02:17:39,820][INFO] Iter   1900 | reward=0.781 | success=0.781 | avg_path=4.69 | pg_loss=-3.4396 | kl_loss=30.0151
+[2025-11-17 02:18:06,877][INFO] Iter   1950 | reward=0.844 | success=0.844 | avg_path=4.75 | pg_loss=0.2167 | kl_loss=26.9582
+[2025-11-17 02:18:33,890][INFO] Iter   2000 | reward=0.781 | success=0.781 | avg_path=5.31 | pg_loss=-3.0936 | kl_loss=27.0096
+[2025-11-17 02:18:49,801][INFO] ---- Evaluation at iter 2000 ----
+[2025-11-17 02:18:49,804][INFO]   S1->S2: 98.31% (291 / 296)
+[2025-11-17 02:18:49,804][INFO]   S2->S3: 98.67% (297 / 301)
+[2025-11-17 02:18:49,804][INFO]   S1->S3: 1.56% (7 / 450)
+[2025-11-17 02:18:49,804][INFO]   overall: 56.83% (595 / 1047)
+[2025-11-17 02:18:49,808][INFO] Saved PG checkpoint to out_pg/pg_20251117_020015/ckpt_pg_2000.pt
+[2025-11-17 02:19:16,542][INFO] Iter   2050 | reward=0.844 | success=0.844 | avg_path=4.41 | pg_loss=1.6771 | kl_loss=30.5660
+[2025-11-17 02:19:45,277][INFO] Iter   2100 | reward=0.844 | success=0.844 | avg_path=4.81 | pg_loss=-0.2136 | kl_loss=30.0470
+[2025-11-17 02:20:12,266][INFO] Iter   2150 | reward=0.938 | success=0.938 | avg_path=5.00 | pg_loss=2.5345 | kl_loss=25.7741
+[2025-11-17 02:20:40,932][INFO] Iter   2200 | reward=0.844 | success=0.844 | avg_path=5.09 | pg_loss=0.8605 | kl_loss=29.7097
+[2025-11-17 02:21:08,216][INFO] Iter   2250 | reward=0.906 | success=0.906 | avg_path=5.16 | pg_loss=0.4854 | kl_loss=28.2439
+[2025-11-17 02:21:35,620][INFO] Iter   2300 | reward=0.969 | success=0.969 | avg_path=4.72 | pg_loss=0.8836 | kl_loss=34.7980
+[2025-11-17 02:22:05,962][INFO] Iter   2350 | reward=0.844 | success=0.844 | avg_path=4.22 | pg_loss=-1.5261 | kl_loss=29.3847
+[2025-11-17 02:22:35,193][INFO] Iter   2400 | reward=0.781 | success=0.781 | avg_path=4.88 | pg_loss=-2.5820 | kl_loss=33.6925
+[2025-11-17 02:23:02,116][INFO] Iter   2450 | reward=0.875 | success=0.875 | avg_path=4.75 | pg_loss=-1.7740 | kl_loss=33.0215
+[2025-11-17 02:23:29,978][INFO] Iter   2500 | reward=0.812 | success=0.812 | avg_path=4.28 | pg_loss=-2.1370 | kl_loss=36.3501
+[2025-11-17 02:23:56,719][INFO] Iter   2550 | reward=0.781 | success=0.781 | avg_path=4.25 | pg_loss=-4.0784 | kl_loss=40.8098
+[2025-11-17 02:24:23,466][INFO] Iter   2600 | reward=0.844 | success=0.844 | avg_path=4.81 | pg_loss=-1.8533 | kl_loss=53.0560
+[2025-11-17 02:24:50,453][INFO] Iter   2650 | reward=0.875 | success=0.875 | avg_path=4.78 | pg_loss=0.7500 | kl_loss=48.1048
+[2025-11-17 02:25:17,178][INFO] Iter   2700 | reward=0.844 | success=0.844 | avg_path=4.34 | pg_loss=-1.2950 | kl_loss=54.8077
+[2025-11-17 02:25:44,149][INFO] Iter   2750 | reward=0.906 | success=0.906 | avg_path=4.44 | pg_loss=2.0334 | kl_loss=56.9222
+[2025-11-17 02:26:11,014][INFO] Iter   2800 | reward=0.812 | success=0.812 | avg_path=4.91 | pg_loss=-2.9155 | kl_loss=49.8656
+[2025-11-17 02:26:39,334][INFO] Iter   2850 | reward=0.938 | success=0.938 | avg_path=4.59 | pg_loss=-0.7206 | kl_loss=48.1136
+[2025-11-17 02:27:09,132][INFO] Iter   2900 | reward=0.906 | success=0.906 | avg_path=4.75 | pg_loss=0.9073 | kl_loss=47.9902
+[2025-11-17 02:27:39,437][INFO] Iter   2950 | reward=0.844 | success=0.844 | avg_path=4.47 | pg_loss=-0.4510 | kl_loss=51.1337
+[2025-11-17 02:28:06,306][INFO] Iter   3000 | reward=0.906 | success=0.906 | avg_path=4.56 | pg_loss=0.9075 | kl_loss=44.1523
+[2025-11-17 02:28:22,648][INFO] ---- Evaluation at iter 3000 ----
+[2025-11-17 02:28:22,651][INFO]   S1->S2: 97.30% (288 / 296)
+[2025-11-17 02:28:22,651][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 02:28:22,651][INFO]   S1->S3: 4.67% (21 / 450)
+[2025-11-17 02:28:22,651][INFO]   overall: 58.26% (610 / 1047)
+[2025-11-17 02:28:49,977][INFO] Iter   3050 | reward=0.875 | success=0.875 | avg_path=4.47 | pg_loss=-2.4639 | kl_loss=49.0816
+[2025-11-17 02:29:16,818][INFO] Iter   3100 | reward=0.812 | success=0.812 | avg_path=4.31 | pg_loss=2.4773 | kl_loss=46.6917
+[2025-11-17 02:29:43,399][INFO] Iter   3150 | reward=0.906 | success=0.906 | avg_path=4.34 | pg_loss=-0.8275 | kl_loss=45.3122
+[2025-11-17 02:30:10,596][INFO] Iter   3200 | reward=0.844 | success=0.844 | avg_path=4.75 | pg_loss=-2.6509 | kl_loss=48.6361
+[2025-11-17 02:30:37,561][INFO] Iter   3250 | reward=0.938 | success=0.938 | avg_path=4.59 | pg_loss=0.4344 | kl_loss=56.1373
+[2025-11-17 02:31:04,908][INFO] Iter   3300 | reward=0.938 | success=0.938 | avg_path=4.59 | pg_loss=0.3048 | kl_loss=45.5972
+[2025-11-17 02:31:31,866][INFO] Iter   3350 | reward=0.906 | success=0.906 | avg_path=4.22 | pg_loss=-0.7585 | kl_loss=48.8854
+[2025-11-17 02:31:59,107][INFO] Iter   3400 | reward=0.875 | success=0.875 | avg_path=4.62 | pg_loss=-2.7767 | kl_loss=49.4773
+[2025-11-17 02:32:27,468][INFO] Iter   3450 | reward=0.875 | success=0.875 | avg_path=4.81 | pg_loss=-1.8843 | kl_loss=48.8694
+[2025-11-17 02:32:54,259][INFO] Iter   3500 | reward=0.750 | success=0.750 | avg_path=4.56 | pg_loss=-5.6218 | kl_loss=54.1927
+[2025-11-17 02:33:21,322][INFO] Iter   3550 | reward=0.875 | success=0.875 | avg_path=5.12 | pg_loss=0.2865 | kl_loss=46.4094
+[2025-11-17 02:33:48,126][INFO] Iter   3600 | reward=0.812 | success=0.812 | avg_path=4.25 | pg_loss=-1.3181 | kl_loss=47.4234
+[2025-11-17 02:34:18,222][INFO] Iter   3650 | reward=0.875 | success=0.875 | avg_path=4.78 | pg_loss=-1.5711 | kl_loss=55.3732
+[2025-11-17 02:34:48,828][INFO] Iter   3700 | reward=0.875 | success=0.875 | avg_path=4.16 | pg_loss=-0.6775 | kl_loss=50.0869
+[2025-11-17 02:35:16,800][INFO] Iter   3750 | reward=0.906 | success=0.906 | avg_path=4.88 | pg_loss=-1.1853 | kl_loss=51.7725
+[2025-11-17 02:35:43,610][INFO] Iter   3800 | reward=0.969 | success=0.969 | avg_path=5.12 | pg_loss=0.2233 | kl_loss=50.0901
+[2025-11-17 02:36:10,933][INFO] Iter   3850 | reward=0.812 | success=0.812 | avg_path=4.34 | pg_loss=-3.0098 | kl_loss=48.4406
+[2025-11-17 02:36:37,871][INFO] Iter   3900 | reward=0.906 | success=0.906 | avg_path=5.22 | pg_loss=0.3286 | kl_loss=49.8082
+[2025-11-17 02:37:04,995][INFO] Iter   3950 | reward=0.875 | success=0.875 | avg_path=4.84 | pg_loss=-4.0322 | kl_loss=45.4969
+[2025-11-17 02:37:31,864][INFO] Iter   4000 | reward=0.938 | success=0.938 | avg_path=4.69 | pg_loss=1.3977 | kl_loss=54.1544
+[2025-11-17 02:37:47,686][INFO] ---- Evaluation at iter 4000 ----
+[2025-11-17 02:37:47,687][INFO]   S1->S2: 98.31% (291 / 296)
+[2025-11-17 02:37:47,687][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 02:37:47,687][INFO]   S1->S3: 2.67% (12 / 450)
+[2025-11-17 02:37:47,687][INFO]   overall: 57.69% (604 / 1047)
+[2025-11-17 02:37:47,691][INFO] Saved PG checkpoint to out_pg/pg_20251117_020015/ckpt_pg_4000.pt
+[2025-11-17 02:38:14,624][INFO] Iter   4050 | reward=1.000 | success=1.000 | avg_path=4.62 | pg_loss=1.2737 | kl_loss=45.4729
+[2025-11-17 02:38:42,287][INFO] Iter   4100 | reward=0.812 | success=0.812 | avg_path=4.78 | pg_loss=-1.3632 | kl_loss=62.9580
+[2025-11-17 02:39:09,127][INFO] Iter   4150 | reward=0.906 | success=0.906 | avg_path=4.38 | pg_loss=0.4007 | kl_loss=67.8357
+[2025-11-17 02:39:36,207][INFO] Iter   4200 | reward=0.906 | success=0.906 | avg_path=4.84 | pg_loss=-2.6529 | kl_loss=48.8400
+[2025-11-17 02:40:03,221][INFO] Iter   4250 | reward=0.875 | success=0.875 | avg_path=4.50 | pg_loss=-2.5946 | kl_loss=52.7118
+[2025-11-17 02:40:30,509][INFO] Iter   4300 | reward=0.875 | success=0.875 | avg_path=5.00 | pg_loss=-2.1034 | kl_loss=58.8668
+[2025-11-17 02:40:57,706][INFO] Iter   4350 | reward=0.906 | success=0.906 | avg_path=4.72 | pg_loss=-3.1861 | kl_loss=58.8153
+[2025-11-17 02:41:24,839][INFO] Iter   4400 | reward=0.844 | success=0.844 | avg_path=4.38 | pg_loss=-3.6723 | kl_loss=55.3685
+[2025-11-17 02:41:52,000][INFO] Iter   4450 | reward=0.969 | success=0.969 | avg_path=4.34 | pg_loss=0.0372 | kl_loss=56.5874
+[2025-11-17 02:42:19,164][INFO] Iter   4500 | reward=0.906 | success=0.906 | avg_path=4.22 | pg_loss=-0.1611 | kl_loss=53.9143
+[2025-11-17 02:42:46,171][INFO] Iter   4550 | reward=0.938 | success=0.938 | avg_path=4.81 | pg_loss=0.5032 | kl_loss=47.4657
+[2025-11-17 02:43:13,157][INFO] Iter   4600 | reward=1.000 | success=1.000 | avg_path=4.41 | pg_loss=1.5948 | kl_loss=48.2084
+[2025-11-17 02:43:40,310][INFO] Iter   4650 | reward=0.938 | success=0.938 | avg_path=4.62 | pg_loss=1.9344 | kl_loss=47.3648
+[2025-11-17 02:44:07,321][INFO] Iter   4700 | reward=0.969 | success=0.969 | avg_path=4.56 | pg_loss=1.4939 | kl_loss=56.1194
+[2025-11-17 02:44:34,787][INFO] Iter   4750 | reward=0.938 | success=0.938 | avg_path=4.25 | pg_loss=-1.4074 | kl_loss=56.3603
+[2025-11-17 02:45:01,759][INFO] Iter   4800 | reward=0.906 | success=0.906 | avg_path=5.12 | pg_loss=0.3833 | kl_loss=56.4296
+[2025-11-17 02:45:28,769][INFO] Iter   4850 | reward=0.906 | success=0.906 | avg_path=5.00 | pg_loss=-1.7222 | kl_loss=56.6005
+[2025-11-17 02:45:55,779][INFO] Iter   4900 | reward=0.938 | success=0.938 | avg_path=4.28 | pg_loss=-0.4291 | kl_loss=52.6484
+[2025-11-17 02:46:23,244][INFO] Iter   4950 | reward=0.906 | success=0.906 | avg_path=5.19 | pg_loss=-1.8710 | kl_loss=62.0324
+[2025-11-17 02:46:50,023][INFO] Iter   5000 | reward=0.969 | success=0.969 | avg_path=4.78 | pg_loss=0.3508 | kl_loss=56.5188
+[2025-11-17 02:47:05,785][INFO] ---- Evaluation at iter 5000 ----
+[2025-11-17 02:47:05,788][INFO]   S1->S2: 98.99% (293 / 296)
+[2025-11-17 02:47:05,788][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 02:47:05,788][INFO]   S1->S3: 5.33% (24 / 450)
+[2025-11-17 02:47:05,788][INFO]   overall: 59.03% (618 / 1047)
+[2025-11-17 02:47:32,960][INFO] Iter   5050 | reward=0.938 | success=0.938 | avg_path=5.19 | pg_loss=0.1065 | kl_loss=57.2746
+[2025-11-17 02:47:59,681][INFO] Iter   5100 | reward=0.875 | success=0.875 | avg_path=4.88 | pg_loss=-2.6809 | kl_loss=54.2969
+[2025-11-17 02:48:27,143][INFO] Iter   5150 | reward=0.969 | success=0.969 | avg_path=4.94 | pg_loss=-0.0057 | kl_loss=63.6892
+[2025-11-17 02:48:54,387][INFO] Iter   5200 | reward=0.844 | success=0.844 | avg_path=4.31 | pg_loss=-2.8207 | kl_loss=66.6427
+[2025-11-17 02:49:21,227][INFO] Iter   5250 | reward=0.969 | success=0.969 | avg_path=5.28 | pg_loss=1.1075 | kl_loss=57.8959
+[2025-11-17 02:49:48,365][INFO] Iter   5300 | reward=0.875 | success=0.875 | avg_path=4.75 | pg_loss=-0.7874 | kl_loss=53.9206
+[2025-11-17 02:50:15,285][INFO] Iter   5350 | reward=0.969 | success=0.969 | avg_path=4.81 | pg_loss=1.0646 | kl_loss=49.7311
+[2025-11-17 02:50:42,176][INFO] Iter   5400 | reward=0.906 | success=0.906 | avg_path=4.66 | pg_loss=0.8550 | kl_loss=45.5708
+[2025-11-17 02:51:09,471][INFO] Iter   5450 | reward=0.906 | success=0.906 | avg_path=4.50 | pg_loss=-1.2031 | kl_loss=50.9160
+[2025-11-17 02:51:36,181][INFO] Iter   5500 | reward=0.969 | success=0.969 | avg_path=4.91 | pg_loss=-0.3543 | kl_loss=57.3429
+[2025-11-17 02:52:03,066][INFO] Iter   5550 | reward=1.000 | success=1.000 | avg_path=4.53 | pg_loss=2.0571 | kl_loss=61.9552
+[2025-11-17 02:52:30,284][INFO] Iter   5600 | reward=0.938 | success=0.938 | avg_path=4.56 | pg_loss=-2.6391 | kl_loss=68.4874
+[2025-11-17 02:52:57,152][INFO] Iter   5650 | reward=0.875 | success=0.875 | avg_path=4.56 | pg_loss=-2.6945 | kl_loss=69.5767
+[2025-11-17 02:53:24,169][INFO] Iter   5700 | reward=1.000 | success=1.000 | avg_path=4.78 | pg_loss=1.4666 | kl_loss=76.5103
+[2025-11-17 02:53:53,831][INFO] Iter   5750 | reward=0.938 | success=0.938 | avg_path=4.69 | pg_loss=-0.5958 | kl_loss=73.3732
+[2025-11-17 02:54:24,099][INFO] Iter   5800 | reward=1.000 | success=1.000 | avg_path=4.97 | pg_loss=1.0246 | kl_loss=82.9023
+[2025-11-17 02:54:52,426][INFO] Iter   5850 | reward=0.969 | success=0.969 | avg_path=4.50 | pg_loss=-1.2651 | kl_loss=92.3508
+[2025-11-17 02:55:21,791][INFO] Iter   5900 | reward=1.000 | success=1.000 | avg_path=4.97 | pg_loss=0.9561 | kl_loss=89.9598
+[2025-11-17 02:55:48,807][INFO] Iter   5950 | reward=0.938 | success=0.938 | avg_path=4.97 | pg_loss=-1.0297 | kl_loss=79.6311
+[2025-11-17 02:56:15,730][INFO] Iter   6000 | reward=0.906 | success=0.906 | avg_path=4.94 | pg_loss=-1.2514 | kl_loss=83.0225
+[2025-11-17 02:56:31,623][INFO] ---- Evaluation at iter 6000 ----
+[2025-11-17 02:56:31,626][INFO]   S1->S2: 98.65% (292 / 296)
+[2025-11-17 02:56:31,627][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 02:56:31,627][INFO]   S1->S3: 16.89% (76 / 450)
+[2025-11-17 02:56:31,627][INFO]   overall: 63.90% (669 / 1047)
+[2025-11-17 02:56:31,630][INFO] Saved PG checkpoint to out_pg/pg_20251117_020015/ckpt_pg_6000.pt
+[2025-11-17 02:56:58,474][INFO] Iter   6050 | reward=0.875 | success=0.875 | avg_path=4.31 | pg_loss=-5.5395 | kl_loss=88.8124
+[2025-11-17 02:57:25,616][INFO] Iter   6100 | reward=0.938 | success=0.938 | avg_path=4.38 | pg_loss=2.9093 | kl_loss=84.4081
+[2025-11-17 02:57:52,816][INFO] Iter   6150 | reward=0.906 | success=0.906 | avg_path=5.03 | pg_loss=-4.3463 | kl_loss=95.0197
+[2025-11-17 02:58:19,760][INFO] Iter   6200 | reward=0.938 | success=0.938 | avg_path=4.88 | pg_loss=-2.5082 | kl_loss=102.1648
+[2025-11-17 02:58:46,492][INFO] Iter   6250 | reward=0.938 | success=0.938 | avg_path=5.19 | pg_loss=-0.2546 | kl_loss=92.6933
+[2025-11-17 02:59:13,530][INFO] Iter   6300 | reward=1.000 | success=1.000 | avg_path=4.81 | pg_loss=1.6289 | kl_loss=97.1081
+[2025-11-17 02:59:40,622][INFO] Iter   6350 | reward=0.906 | success=0.906 | avg_path=5.06 | pg_loss=-0.5374 | kl_loss=104.0823
+[2025-11-17 03:00:07,665][INFO] Iter   6400 | reward=0.938 | success=0.938 | avg_path=5.09 | pg_loss=0.6323 | kl_loss=105.7299
+[2025-11-17 03:00:34,719][INFO] Iter   6450 | reward=0.969 | success=0.969 | avg_path=4.78 | pg_loss=-1.2446 | kl_loss=113.0498
+[2025-11-17 03:01:01,659][INFO] Iter   6500 | reward=0.969 | success=0.969 | avg_path=4.69 | pg_loss=4.5005 | kl_loss=118.5569
+[2025-11-17 03:01:28,278][INFO] Iter   6550 | reward=0.938 | success=0.938 | avg_path=5.22 | pg_loss=-2.8761 | kl_loss=119.0289
+[2025-11-17 03:01:55,096][INFO] Iter   6600 | reward=0.969 | success=0.969 | avg_path=4.75 | pg_loss=0.6535 | kl_loss=117.9520
+[2025-11-17 03:02:22,536][INFO] Iter   6650 | reward=0.969 | success=0.969 | avg_path=5.16 | pg_loss=2.3439 | kl_loss=102.5116
+[2025-11-17 03:02:49,686][INFO] Iter   6700 | reward=1.000 | success=1.000 | avg_path=4.91 | pg_loss=0.2429 | kl_loss=107.9320
+[2025-11-17 03:03:16,510][INFO] Iter   6750 | reward=0.969 | success=0.969 | avg_path=4.72 | pg_loss=0.7456 | kl_loss=105.0969
+[2025-11-17 03:03:43,817][INFO] Iter   6800 | reward=0.906 | success=0.906 | avg_path=4.88 | pg_loss=-4.4020 | kl_loss=120.5202
+[2025-11-17 03:04:11,091][INFO] Iter   6850 | reward=1.000 | success=1.000 | avg_path=4.78 | pg_loss=1.7907 | kl_loss=121.4503
+[2025-11-17 03:04:38,485][INFO] Iter   6900 | reward=0.875 | success=0.875 | avg_path=5.50 | pg_loss=-2.0964 | kl_loss=136.0998
+[2025-11-17 03:05:05,327][INFO] Iter   6950 | reward=0.938 | success=0.938 | avg_path=5.47 | pg_loss=-0.9134 | kl_loss=124.1786
+[2025-11-17 03:05:32,613][INFO] Iter   7000 | reward=0.969 | success=0.969 | avg_path=4.81 | pg_loss=1.0121 | kl_loss=123.9873
+[2025-11-17 03:05:48,731][INFO] ---- Evaluation at iter 7000 ----
+[2025-11-17 03:05:48,735][INFO]   S1->S2: 99.66% (295 / 296)
+[2025-11-17 03:05:48,735][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 03:05:48,735][INFO]   S1->S3: 12.00% (54 / 450)
+[2025-11-17 03:05:48,735][INFO]   overall: 62.08% (650 / 1047)
+[2025-11-17 03:06:15,642][INFO] Iter   7050 | reward=1.000 | success=1.000 | avg_path=5.16 | pg_loss=0.9347 | kl_loss=111.3985
+[2025-11-17 03:06:42,558][INFO] Iter   7100 | reward=1.000 | success=1.000 | avg_path=5.16 | pg_loss=2.0487 | kl_loss=139.9540
+[2025-11-17 03:07:09,451][INFO] Iter   7150 | reward=0.812 | success=0.812 | avg_path=4.91 | pg_loss=-6.4280 | kl_loss=138.5659
+[2025-11-17 03:07:36,986][INFO] Iter   7200 | reward=0.938 | success=0.938 | avg_path=4.94 | pg_loss=-0.9163 | kl_loss=139.9691
+[2025-11-17 03:08:04,158][INFO] Iter   7250 | reward=0.969 | success=0.969 | avg_path=4.69 | pg_loss=-0.4840 | kl_loss=108.2544
+[2025-11-17 03:08:31,459][INFO] Iter   7300 | reward=0.938 | success=0.938 | avg_path=4.81 | pg_loss=-2.2255 | kl_loss=127.8947
+[2025-11-17 03:08:58,600][INFO] Iter   7350 | reward=0.969 | success=0.969 | avg_path=5.12 | pg_loss=-1.3777 | kl_loss=138.1989
+[2025-11-17 03:09:25,914][INFO] Iter   7400 | reward=0.969 | success=0.969 | avg_path=5.28 | pg_loss=0.7333 | kl_loss=155.6351
+[2025-11-17 03:09:53,033][INFO] Iter   7450 | reward=0.906 | success=0.906 | avg_path=5.44 | pg_loss=-2.6077 | kl_loss=149.2683
+[2025-11-17 03:10:20,202][INFO] Iter   7500 | reward=0.938 | success=0.938 | avg_path=4.66 | pg_loss=-4.1014 | kl_loss=147.6068
+[2025-11-17 03:10:47,385][INFO] Iter   7550 | reward=0.969 | success=0.969 | avg_path=4.97 | pg_loss=-1.4241 | kl_loss=135.5954
+[2025-11-17 03:11:14,549][INFO] Iter   7600 | reward=0.875 | success=0.875 | avg_path=5.06 | pg_loss=-2.4121 | kl_loss=139.4234
+[2025-11-17 03:11:41,624][INFO] Iter   7650 | reward=0.969 | success=0.969 | avg_path=4.28 | pg_loss=-0.9937 | kl_loss=140.2582
+[2025-11-17 03:12:08,816][INFO] Iter   7700 | reward=0.969 | success=0.969 | avg_path=4.50 | pg_loss=-1.9274 | kl_loss=147.0798
+[2025-11-17 03:12:35,949][INFO] Iter   7750 | reward=0.906 | success=0.906 | avg_path=4.47 | pg_loss=-0.2540 | kl_loss=133.8913
+[2025-11-17 03:13:02,887][INFO] Iter   7800 | reward=0.938 | success=0.938 | avg_path=4.84 | pg_loss=0.3478 | kl_loss=133.1208
+[2025-11-17 03:13:29,895][INFO] Iter   7850 | reward=0.969 | success=0.969 | avg_path=4.75 | pg_loss=0.9701 | kl_loss=135.7622
+[2025-11-17 03:13:56,785][INFO] Iter   7900 | reward=0.969 | success=0.969 | avg_path=4.50 | pg_loss=0.8144 | kl_loss=149.8784
+[2025-11-17 03:14:24,069][INFO] Iter   7950 | reward=0.875 | success=0.875 | avg_path=4.84 | pg_loss=-5.8053 | kl_loss=148.2886
+[2025-11-17 03:14:51,135][INFO] Iter   8000 | reward=0.844 | success=0.844 | avg_path=4.81 | pg_loss=-5.0852 | kl_loss=150.2011
+[2025-11-17 03:15:09,374][INFO] ---- Evaluation at iter 8000 ----
+[2025-11-17 03:15:09,375][INFO]   S1->S2: 98.99% (293 / 296)
+[2025-11-17 03:15:09,375][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 03:15:09,375][INFO]   S1->S3: 15.56% (70 / 450)
+[2025-11-17 03:15:09,375][INFO]   overall: 63.42% (664 / 1047)
+[2025-11-17 03:15:09,379][INFO] Saved PG checkpoint to out_pg/pg_20251117_020015/ckpt_pg_8000.pt
+[2025-11-17 03:15:36,465][INFO] Iter   8050 | reward=0.969 | success=0.969 | avg_path=5.06 | pg_loss=-1.6258 | kl_loss=131.7671
+[2025-11-17 03:16:03,543][INFO] Iter   8100 | reward=0.969 | success=0.969 | avg_path=4.75 | pg_loss=0.5303 | kl_loss=149.5495
+[2025-11-17 03:16:30,448][INFO] Iter   8150 | reward=0.969 | success=0.969 | avg_path=5.56 | pg_loss=-1.6057 | kl_loss=148.7888
+[2025-11-17 03:16:57,697][INFO] Iter   8200 | reward=0.969 | success=0.969 | avg_path=5.03 | pg_loss=-0.8226 | kl_loss=139.4695
+[2025-11-17 03:17:24,744][INFO] Iter   8250 | reward=1.000 | success=1.000 | avg_path=4.75 | pg_loss=2.6866 | kl_loss=149.3571
+[2025-11-17 03:17:52,000][INFO] Iter   8300 | reward=1.000 | success=1.000 | avg_path=4.53 | pg_loss=0.4126 | kl_loss=146.9639
+[2025-11-17 03:18:19,537][INFO] Iter   8350 | reward=1.000 | success=1.000 | avg_path=4.56 | pg_loss=1.7894 | kl_loss=154.2831
+[2025-11-17 03:18:46,598][INFO] Iter   8400 | reward=0.969 | success=0.969 | avg_path=4.94 | pg_loss=1.7703 | kl_loss=154.6264
+[2025-11-17 03:19:13,652][INFO] Iter   8450 | reward=0.969 | success=0.969 | avg_path=4.84 | pg_loss=-1.3348 | kl_loss=148.0653
+[2025-11-17 03:19:40,760][INFO] Iter   8500 | reward=1.000 | success=1.000 | avg_path=4.81 | pg_loss=2.6070 | kl_loss=134.2772
+[2025-11-17 03:20:08,063][INFO] Iter   8550 | reward=1.000 | success=1.000 | avg_path=5.34 | pg_loss=3.0569 | kl_loss=128.9704
+[2025-11-17 03:20:35,099][INFO] Iter   8600 | reward=0.969 | success=0.969 | avg_path=5.12 | pg_loss=3.3931 | kl_loss=128.3069
+[2025-11-17 03:21:02,275][INFO] Iter   8650 | reward=0.969 | success=0.969 | avg_path=5.38 | pg_loss=-0.3570 | kl_loss=131.4506
+[2025-11-17 03:21:29,341][INFO] Iter   8700 | reward=1.000 | success=1.000 | avg_path=4.91 | pg_loss=1.7366 | kl_loss=129.5122
+[2025-11-17 03:21:56,112][INFO] Iter   8750 | reward=1.000 | success=1.000 | avg_path=4.88 | pg_loss=2.0022 | kl_loss=138.8856
+[2025-11-17 03:22:23,304][INFO] Iter   8800 | reward=0.969 | success=0.969 | avg_path=4.62 | pg_loss=-1.0120 | kl_loss=143.0284
+[2025-11-17 03:22:50,479][INFO] Iter   8850 | reward=0.969 | success=0.969 | avg_path=5.09 | pg_loss=0.8014 | kl_loss=151.3819
+[2025-11-17 03:23:17,634][INFO] Iter   8900 | reward=1.000 | success=1.000 | avg_path=4.69 | pg_loss=3.3040 | kl_loss=153.9817
+[2025-11-17 03:23:44,498][INFO] Iter   8950 | reward=0.938 | success=0.938 | avg_path=4.94 | pg_loss=1.6596 | kl_loss=149.2568
+[2025-11-17 03:24:11,861][INFO] Iter   9000 | reward=0.875 | success=0.875 | avg_path=5.00 | pg_loss=-6.8877 | kl_loss=140.9866
+[2025-11-17 03:24:27,708][INFO] ---- Evaluation at iter 9000 ----
+[2025-11-17 03:24:27,710][INFO]   S1->S2: 99.32% (294 / 296)
+[2025-11-17 03:24:27,710][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 03:24:27,710][INFO]   S1->S3: 34.22% (154 / 450)
+[2025-11-17 03:24:27,710][INFO]   overall: 71.54% (749 / 1047)
+[2025-11-17 03:24:54,969][INFO] Iter   9050 | reward=0.906 | success=0.906 | avg_path=4.53 | pg_loss=-6.0213 | kl_loss=149.3492
+[2025-11-17 03:25:21,890][INFO] Iter   9100 | reward=1.000 | success=1.000 | avg_path=5.06 | pg_loss=1.9266 | kl_loss=147.5336
+[2025-11-17 03:25:49,145][INFO] Iter   9150 | reward=0.938 | success=0.938 | avg_path=4.84 | pg_loss=-2.3782 | kl_loss=155.8810
+[2025-11-17 03:26:16,672][INFO] Iter   9200 | reward=0.938 | success=0.938 | avg_path=4.66 | pg_loss=-2.8676 | kl_loss=141.9518
+[2025-11-17 03:26:44,947][INFO] Iter   9250 | reward=0.969 | success=0.969 | avg_path=5.34 | pg_loss=3.9005 | kl_loss=146.8121
+[2025-11-17 03:27:11,916][INFO] Iter   9300 | reward=1.000 | success=1.000 | avg_path=5.12 | pg_loss=1.2664 | kl_loss=142.2273
+[2025-11-17 03:27:39,050][INFO] Iter   9350 | reward=1.000 | success=1.000 | avg_path=4.97 | pg_loss=3.2168 | kl_loss=145.9220
+[2025-11-17 03:28:06,991][INFO] Iter   9400 | reward=0.969 | success=0.969 | avg_path=5.31 | pg_loss=3.8854 | kl_loss=148.9084
+[2025-11-17 03:28:37,088][INFO] Iter   9450 | reward=0.938 | success=0.938 | avg_path=5.47 | pg_loss=-2.5699 | kl_loss=166.8841
+[2025-11-17 03:29:06,462][INFO] Iter   9500 | reward=0.938 | success=0.938 | avg_path=5.12 | pg_loss=-1.3364 | kl_loss=146.6227
+[2025-11-17 03:29:33,509][INFO] Iter   9550 | reward=0.938 | success=0.938 | avg_path=4.97 | pg_loss=-2.0219 | kl_loss=153.8312
+[2025-11-17 03:30:00,874][INFO] Iter   9600 | reward=0.969 | success=0.969 | avg_path=5.09 | pg_loss=-0.4100 | kl_loss=163.8920
+[2025-11-17 03:30:27,976][INFO] Iter   9650 | reward=0.969 | success=0.969 | avg_path=5.00 | pg_loss=4.4221 | kl_loss=170.6933
+[2025-11-17 03:30:54,974][INFO] Iter   9700 | reward=0.969 | success=0.969 | avg_path=4.53 | pg_loss=0.3558 | kl_loss=155.6532
+[2025-11-17 03:31:21,915][INFO] Iter   9750 | reward=1.000 | success=1.000 | avg_path=5.22 | pg_loss=4.1753 | kl_loss=167.2786
+[2025-11-17 03:31:48,682][INFO] Iter   9800 | reward=1.000 | success=1.000 | avg_path=4.66 | pg_loss=0.0998 | kl_loss=163.4905
+[2025-11-17 03:32:15,754][INFO] Iter   9850 | reward=0.906 | success=0.906 | avg_path=5.69 | pg_loss=-5.7737 | kl_loss=164.3560
+[2025-11-17 03:32:42,853][INFO] Iter   9900 | reward=0.938 | success=0.938 | avg_path=4.94 | pg_loss=0.3187 | kl_loss=152.9775
+[2025-11-17 03:33:09,552][INFO] Iter   9950 | reward=0.875 | success=0.875 | avg_path=5.00 | pg_loss=-5.6953 | kl_loss=149.1498
+[2025-11-17 03:33:36,558][INFO] Iter  10000 | reward=0.938 | success=0.938 | avg_path=4.88 | pg_loss=-2.0976 | kl_loss=153.9545
+[2025-11-17 03:33:52,537][INFO] ---- Evaluation at iter 10000 ----
+[2025-11-17 03:33:52,541][INFO]   S1->S2: 99.32% (294 / 296)
+[2025-11-17 03:33:52,541][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 03:33:52,541][INFO]   S1->S3: 45.78% (206 / 450)
+[2025-11-17 03:33:52,541][INFO]   overall: 76.50% (801 / 1047)
+[2025-11-17 03:33:52,545][INFO] Saved PG checkpoint to out_pg/pg_20251117_020015/ckpt_pg_10000.pt
+[2025-11-17 03:34:19,716][INFO] Iter  10050 | reward=0.938 | success=0.938 | avg_path=4.44 | pg_loss=-2.7207 | kl_loss=145.7436
+[2025-11-17 03:34:46,747][INFO] Iter  10100 | reward=0.938 | success=0.938 | avg_path=5.47 | pg_loss=-3.5398 | kl_loss=171.8606
+[2025-11-17 03:35:13,844][INFO] Iter  10150 | reward=0.906 | success=0.906 | avg_path=5.09 | pg_loss=-2.0320 | kl_loss=168.7145
+[2025-11-17 03:35:40,777][INFO] Iter  10200 | reward=1.000 | success=1.000 | avg_path=4.69 | pg_loss=0.4318 | kl_loss=164.9287
+[2025-11-17 03:36:07,858][INFO] Iter  10250 | reward=0.969 | success=0.969 | avg_path=5.09 | pg_loss=2.7589 | kl_loss=163.3697
+[2025-11-17 03:36:34,952][INFO] Iter  10300 | reward=0.969 | success=0.969 | avg_path=4.88 | pg_loss=-2.1237 | kl_loss=170.6049
+[2025-11-17 03:37:01,703][INFO] Iter  10350 | reward=0.906 | success=0.906 | avg_path=6.00 | pg_loss=-5.3424 | kl_loss=175.5206
+[2025-11-17 03:37:28,858][INFO] Iter  10400 | reward=1.000 | success=1.000 | avg_path=5.12 | pg_loss=0.0404 | kl_loss=171.4538
+[2025-11-17 03:37:55,915][INFO] Iter  10450 | reward=1.000 | success=1.000 | avg_path=4.62 | pg_loss=0.1097 | kl_loss=161.3241
+[2025-11-17 03:38:22,773][INFO] Iter  10500 | reward=1.000 | success=1.000 | avg_path=4.94 | pg_loss=1.3517 | kl_loss=172.9199
+[2025-11-17 03:38:49,765][INFO] Iter  10550 | reward=0.969 | success=0.969 | avg_path=4.62 | pg_loss=1.1840 | kl_loss=168.2636
+[2025-11-17 03:39:16,761][INFO] Iter  10600 | reward=0.969 | success=0.969 | avg_path=4.44 | pg_loss=-1.3892 | kl_loss=170.2404
+[2025-11-17 03:39:46,590][INFO] Iter  10650 | reward=0.969 | success=0.969 | avg_path=5.16 | pg_loss=-0.5731 | kl_loss=154.8228
+[2025-11-17 03:40:15,431][INFO] Iter  10700 | reward=1.000 | success=1.000 | avg_path=4.56 | pg_loss=0.6739 | kl_loss=166.1679
+[2025-11-17 03:40:42,446][INFO] Iter  10750 | reward=0.969 | success=0.969 | avg_path=4.75 | pg_loss=-1.3320 | kl_loss=154.2770
+[2025-11-17 03:41:09,244][INFO] Iter  10800 | reward=1.000 | success=1.000 | avg_path=4.56 | pg_loss=3.7457 | kl_loss=165.6971
+[2025-11-17 03:41:35,824][INFO] Iter  10850 | reward=0.938 | success=0.938 | avg_path=5.25 | pg_loss=-2.5545 | kl_loss=169.5753
+[2025-11-17 03:42:02,849][INFO] Iter  10900 | reward=1.000 | success=1.000 | avg_path=5.06 | pg_loss=2.4002 | kl_loss=156.4976
+[2025-11-17 03:42:29,791][INFO] Iter  10950 | reward=0.969 | success=0.969 | avg_path=4.97 | pg_loss=0.3299 | kl_loss=152.6292
+[2025-11-17 03:42:56,742][INFO] Iter  11000 | reward=0.969 | success=0.969 | avg_path=5.03 | pg_loss=-0.2018 | kl_loss=166.8330
+[2025-11-17 03:43:12,453][INFO] ---- Evaluation at iter 11000 ----
+[2025-11-17 03:43:12,454][INFO]   S1->S2: 100.00% (296 / 296)
+[2025-11-17 03:43:12,454][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 03:43:12,454][INFO]   S1->S3: 52.67% (237 / 450)
+[2025-11-17 03:43:12,454][INFO]   overall: 79.66% (834 / 1047)
+[2025-11-17 03:43:40,867][INFO] Iter  11050 | reward=0.969 | success=0.969 | avg_path=4.81 | pg_loss=-0.3529 | kl_loss=164.3033
+[2025-11-17 03:44:08,108][INFO] Iter  11100 | reward=1.000 | success=1.000 | avg_path=4.81 | pg_loss=3.0130 | kl_loss=159.0732
+[2025-11-17 03:44:35,324][INFO] Iter  11150 | reward=1.000 | success=1.000 | avg_path=4.69 | pg_loss=2.3039 | kl_loss=148.4694
+[2025-11-17 03:45:04,548][INFO] Iter  11200 | reward=0.906 | success=0.906 | avg_path=5.16 | pg_loss=-2.9991 | kl_loss=154.4743
+[2025-11-17 03:45:33,839][INFO] Iter  11250 | reward=0.969 | success=0.969 | avg_path=5.25 | pg_loss=0.4293 | kl_loss=136.7859
+[2025-11-17 03:46:04,324][INFO] Iter  11300 | reward=0.906 | success=0.906 | avg_path=5.22 | pg_loss=-5.4800 | kl_loss=164.3681
+[2025-11-17 03:46:31,153][INFO] Iter  11350 | reward=0.938 | success=0.938 | avg_path=5.47 | pg_loss=-2.9600 | kl_loss=145.6162
+[2025-11-17 03:47:00,150][INFO] Iter  11400 | reward=1.000 | success=1.000 | avg_path=4.59 | pg_loss=4.2321 | kl_loss=162.4251
+[2025-11-17 03:47:28,659][INFO] Iter  11450 | reward=0.969 | success=0.969 | avg_path=4.69 | pg_loss=0.2971 | kl_loss=161.5876
+[2025-11-17 03:47:56,474][INFO] Iter  11500 | reward=0.969 | success=0.969 | avg_path=4.88 | pg_loss=1.3167 | kl_loss=145.3210
+[2025-11-17 03:48:25,974][INFO] Iter  11550 | reward=1.000 | success=1.000 | avg_path=5.03 | pg_loss=0.3721 | kl_loss=144.9737
+[2025-11-17 03:48:55,109][INFO] Iter  11600 | reward=0.938 | success=0.938 | avg_path=5.16 | pg_loss=0.2515 | kl_loss=141.0680
+[2025-11-17 03:49:22,672][INFO] Iter  11650 | reward=0.969 | success=0.969 | avg_path=5.28 | pg_loss=0.8807 | kl_loss=157.9687
+[2025-11-17 03:49:49,916][INFO] Iter  11700 | reward=0.969 | success=0.969 | avg_path=4.94 | pg_loss=-2.1651 | kl_loss=150.6734
+[2025-11-17 03:50:17,164][INFO] Iter  11750 | reward=1.000 | success=1.000 | avg_path=5.38 | pg_loss=1.2377 | kl_loss=148.1198
+[2025-11-17 03:50:43,814][INFO] Iter  11800 | reward=1.000 | success=1.000 | avg_path=4.78 | pg_loss=1.9016 | kl_loss=163.2441
+[2025-11-17 03:51:10,891][INFO] Iter  11850 | reward=0.969 | success=0.969 | avg_path=5.00 | pg_loss=-0.5381 | kl_loss=159.7419
+[2025-11-17 03:51:37,874][INFO] Iter  11900 | reward=1.000 | success=1.000 | avg_path=5.09 | pg_loss=0.1207 | kl_loss=157.2899
+[2025-11-17 03:52:05,395][INFO] Iter  11950 | reward=0.938 | success=0.938 | avg_path=4.72 | pg_loss=1.4859 | kl_loss=141.6283
+[2025-11-17 03:52:32,517][INFO] Iter  12000 | reward=1.000 | success=1.000 | avg_path=5.00 | pg_loss=2.1673 | kl_loss=144.8960
+[2025-11-17 03:52:48,561][INFO] ---- Evaluation at iter 12000 ----
+[2025-11-17 03:52:48,562][INFO]   S1->S2: 98.99% (293 / 296)
+[2025-11-17 03:52:48,562][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 03:52:48,563][INFO]   S1->S3: 47.56% (214 / 450)
+[2025-11-17 03:52:48,563][INFO]   overall: 77.17% (808 / 1047)
+[2025-11-17 03:52:48,567][INFO] Saved PG checkpoint to out_pg/pg_20251117_020015/ckpt_pg_12000.pt
+[2025-11-17 03:53:15,578][INFO] Iter  12050 | reward=1.000 | success=1.000 | avg_path=4.94 | pg_loss=0.3870 | kl_loss=154.3411
+[2025-11-17 03:53:42,873][INFO] Iter  12100 | reward=0.969 | success=0.969 | avg_path=4.66 | pg_loss=-1.9356 | kl_loss=137.7575
+[2025-11-17 03:54:09,750][INFO] Iter  12150 | reward=0.969 | success=0.969 | avg_path=4.53 | pg_loss=-1.5150 | kl_loss=148.2176
+[2025-11-17 03:54:36,546][INFO] Iter  12200 | reward=0.969 | success=0.969 | avg_path=4.81 | pg_loss=-0.3594 | kl_loss=140.6370
+[2025-11-17 03:55:03,507][INFO] Iter  12250 | reward=1.000 | success=1.000 | avg_path=4.75 | pg_loss=0.3545 | kl_loss=142.6891
+[2025-11-17 03:55:30,512][INFO] Iter  12300 | reward=0.969 | success=0.969 | avg_path=4.75 | pg_loss=-1.3123 | kl_loss=139.4288
+[2025-11-17 03:55:57,814][INFO] Iter  12350 | reward=0.938 | success=0.938 | avg_path=5.25 | pg_loss=-3.8627 | kl_loss=159.1638
+[2025-11-17 03:56:24,653][INFO] Iter  12400 | reward=1.000 | success=1.000 | avg_path=4.72 | pg_loss=0.1522 | kl_loss=156.6560
+[2025-11-17 03:56:51,945][INFO] Iter  12450 | reward=1.000 | success=1.000 | avg_path=5.19 | pg_loss=1.2330 | kl_loss=141.8695
+[2025-11-17 03:57:19,018][INFO] Iter  12500 | reward=1.000 | success=1.000 | avg_path=4.94 | pg_loss=0.5711 | kl_loss=144.3884
+[2025-11-17 03:57:46,036][INFO] Iter  12550 | reward=1.000 | success=1.000 | avg_path=4.72 | pg_loss=1.7386 | kl_loss=156.1901
+[2025-11-17 03:58:12,966][INFO] Iter  12600 | reward=0.969 | success=0.969 | avg_path=5.06 | pg_loss=-0.2263 | kl_loss=147.9891
+[2025-11-17 03:58:41,289][INFO] Iter  12650 | reward=0.969 | success=0.969 | avg_path=5.16 | pg_loss=3.6256 | kl_loss=163.5570
+[2025-11-17 03:59:08,171][INFO] Iter  12700 | reward=1.000 | success=1.000 | avg_path=5.44 | pg_loss=4.4803 | kl_loss=151.0218
+[2025-11-17 03:59:37,012][INFO] Iter  12750 | reward=0.969 | success=0.969 | avg_path=5.91 | pg_loss=-0.6119 | kl_loss=146.8863
+[2025-11-17 04:00:04,960][INFO] Iter  12800 | reward=0.969 | success=0.969 | avg_path=4.75 | pg_loss=-0.5645 | kl_loss=136.6281
+[2025-11-17 04:00:31,954][INFO] Iter  12850 | reward=0.969 | success=0.969 | avg_path=5.59 | pg_loss=-1.3621 | kl_loss=164.3664
+[2025-11-17 04:00:58,933][INFO] Iter  12900 | reward=0.906 | success=0.906 | avg_path=4.75 | pg_loss=-3.9902 | kl_loss=162.5715
+[2025-11-17 04:01:25,678][INFO] Iter  12950 | reward=1.000 | success=1.000 | avg_path=5.00 | pg_loss=0.3656 | kl_loss=147.8662
+[2025-11-17 04:01:54,991][INFO] Iter  13000 | reward=0.969 | success=0.969 | avg_path=4.91 | pg_loss=-0.8791 | kl_loss=141.4206
+[2025-11-17 04:02:11,147][INFO] ---- Evaluation at iter 13000 ----
+[2025-11-17 04:02:11,148][INFO]   S1->S2: 99.32% (294 / 296)
+[2025-11-17 04:02:11,148][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 04:02:11,148][INFO]   S1->S3: 40.44% (182 / 450)
+[2025-11-17 04:02:11,148][INFO]   overall: 74.21% (777 / 1047)
+[2025-11-17 04:02:38,168][INFO] Iter  13050 | reward=1.000 | success=1.000 | avg_path=4.69 | pg_loss=1.3337 | kl_loss=170.0215
+[2025-11-17 04:03:05,563][INFO] Iter  13100 | reward=1.000 | success=1.000 | avg_path=5.00 | pg_loss=0.1220 | kl_loss=162.0422
+[2025-11-17 04:03:32,993][INFO] Iter  13150 | reward=1.000 | success=1.000 | avg_path=4.81 | pg_loss=2.1229 | kl_loss=140.0667
+[2025-11-17 04:04:01,580][INFO] Iter  13200 | reward=1.000 | success=1.000 | avg_path=4.59 | pg_loss=0.3509 | kl_loss=161.0049
+[2025-11-17 04:04:29,581][INFO] Iter  13250 | reward=1.000 | success=1.000 | avg_path=4.50 | pg_loss=0.1384 | kl_loss=145.1748
+[2025-11-17 04:04:59,855][INFO] Iter  13300 | reward=0.969 | success=0.969 | avg_path=4.94 | pg_loss=-1.4770 | kl_loss=119.1022
+[2025-11-17 04:05:30,879][INFO] Iter  13350 | reward=0.938 | success=0.938 | avg_path=5.00 | pg_loss=0.9245 | kl_loss=161.9922
+[2025-11-17 04:06:02,098][INFO] Iter  13400 | reward=1.000 | success=1.000 | avg_path=4.41 | pg_loss=0.0968 | kl_loss=167.9078
+[2025-11-17 04:06:32,024][INFO] Iter  13450 | reward=0.938 | success=0.938 | avg_path=4.69 | pg_loss=-2.9737 | kl_loss=150.3414
+[2025-11-17 04:06:59,111][INFO] Iter  13500 | reward=0.938 | success=0.938 | avg_path=4.88 | pg_loss=-2.1275 | kl_loss=152.7681
+[2025-11-17 04:07:26,357][INFO] Iter  13550 | reward=0.969 | success=0.969 | avg_path=4.50 | pg_loss=1.9212 | kl_loss=143.7813
+[2025-11-17 04:07:53,320][INFO] Iter  13600 | reward=1.000 | success=1.000 | avg_path=5.00 | pg_loss=0.1473 | kl_loss=130.9481
+[2025-11-17 04:08:23,535][INFO] Iter  13650 | reward=0.969 | success=0.969 | avg_path=4.59 | pg_loss=-1.1072 | kl_loss=134.6466
+[2025-11-17 04:08:51,043][INFO] Iter  13700 | reward=0.938 | success=0.938 | avg_path=4.97 | pg_loss=-0.9269 | kl_loss=154.0753
+[2025-11-17 04:09:17,978][INFO] Iter  13750 | reward=1.000 | success=1.000 | avg_path=4.84 | pg_loss=1.3552 | kl_loss=136.6789
+[2025-11-17 04:09:45,557][INFO] Iter  13800 | reward=0.969 | success=0.969 | avg_path=4.47 | pg_loss=-0.1846 | kl_loss=158.5318
+[2025-11-17 04:10:12,497][INFO] Iter  13850 | reward=0.969 | success=0.969 | avg_path=4.66 | pg_loss=0.3395 | kl_loss=145.5917
+[2025-11-17 04:10:39,711][INFO] Iter  13900 | reward=0.938 | success=0.938 | avg_path=5.22 | pg_loss=-2.8419 | kl_loss=142.7592
+[2025-11-17 04:11:06,612][INFO] Iter  13950 | reward=0.969 | success=0.969 | avg_path=4.59 | pg_loss=-0.4492 | kl_loss=156.1476
+[2025-11-17 04:11:33,857][INFO] Iter  14000 | reward=1.000 | success=1.000 | avg_path=4.91 | pg_loss=1.7866 | kl_loss=166.5640
+[2025-11-17 04:11:49,850][INFO] ---- Evaluation at iter 14000 ----
+[2025-11-17 04:11:49,855][INFO]   S1->S2: 99.32% (294 / 296)
+[2025-11-17 04:11:49,855][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 04:11:49,855][INFO]   S1->S3: 49.11% (221 / 450)
+[2025-11-17 04:11:49,855][INFO]   overall: 77.94% (816 / 1047)
+[2025-11-17 04:11:49,859][INFO] Saved PG checkpoint to out_pg/pg_20251117_020015/ckpt_pg_14000.pt
+[2025-11-17 04:12:16,774][INFO] Iter  14050 | reward=1.000 | success=1.000 | avg_path=4.75 | pg_loss=0.8578 | kl_loss=147.4902
+[2025-11-17 04:12:44,162][INFO] Iter  14100 | reward=1.000 | success=1.000 | avg_path=5.28 | pg_loss=1.0698 | kl_loss=129.2767
+[2025-11-17 04:13:11,190][INFO] Iter  14150 | reward=0.969 | success=0.969 | avg_path=4.75 | pg_loss=-2.2341 | kl_loss=131.8976
+[2025-11-17 04:13:38,268][INFO] Iter  14200 | reward=0.969 | success=0.969 | avg_path=5.06 | pg_loss=-0.7127 | kl_loss=131.5619
+[2025-11-17 04:14:05,483][INFO] Iter  14250 | reward=0.969 | success=0.969 | avg_path=4.78 | pg_loss=-2.3704 | kl_loss=145.2712
+[2025-11-17 04:14:32,453][INFO] Iter  14300 | reward=1.000 | success=1.000 | avg_path=5.19 | pg_loss=1.0209 | kl_loss=145.9035
+[2025-11-17 04:14:59,489][INFO] Iter  14350 | reward=0.938 | success=0.938 | avg_path=4.62 | pg_loss=-3.1632 | kl_loss=148.2713
+[2025-11-17 04:15:26,584][INFO] Iter  14400 | reward=1.000 | success=1.000 | avg_path=4.78 | pg_loss=2.6455 | kl_loss=130.4180
+[2025-11-17 04:15:53,469][INFO] Iter  14450 | reward=1.000 | success=1.000 | avg_path=5.09 | pg_loss=0.0383 | kl_loss=144.0929
+[2025-11-17 04:16:20,790][INFO] Iter  14500 | reward=1.000 | success=1.000 | avg_path=5.25 | pg_loss=0.8853 | kl_loss=144.8279
+[2025-11-17 04:16:48,024][INFO] Iter  14550 | reward=0.938 | success=0.938 | avg_path=5.78 | pg_loss=-4.2029 | kl_loss=144.8273
+[2025-11-17 04:17:14,993][INFO] Iter  14600 | reward=1.000 | success=1.000 | avg_path=4.72 | pg_loss=1.6970 | kl_loss=137.0772
+[2025-11-17 04:17:41,880][INFO] Iter  14650 | reward=0.969 | success=0.969 | avg_path=5.25 | pg_loss=-0.2622 | kl_loss=127.7885
+[2025-11-17 04:18:10,104][INFO] Iter  14700 | reward=1.000 | success=1.000 | avg_path=5.47 | pg_loss=0.0553 | kl_loss=136.2401
+[2025-11-17 04:18:40,207][INFO] Iter  14750 | reward=1.000 | success=1.000 | avg_path=4.84 | pg_loss=2.3322 | kl_loss=142.5568
+[2025-11-17 04:19:10,871][INFO] Iter  14800 | reward=1.000 | success=1.000 | avg_path=4.88 | pg_loss=1.3531 | kl_loss=130.4832
+[2025-11-17 04:19:39,293][INFO] Iter  14850 | reward=1.000 | success=1.000 | avg_path=5.06 | pg_loss=1.7099 | kl_loss=127.5996
+[2025-11-17 04:20:06,350][INFO] Iter  14900 | reward=0.969 | success=0.969 | avg_path=5.03 | pg_loss=1.5240 | kl_loss=128.5986
+[2025-11-17 04:20:33,411][INFO] Iter  14950 | reward=0.969 | success=0.969 | avg_path=5.19 | pg_loss=1.1030 | kl_loss=136.2242
+[2025-11-17 04:21:00,213][INFO] Iter  15000 | reward=1.000 | success=1.000 | avg_path=4.66 | pg_loss=1.5613 | kl_loss=135.6737
+[2025-11-17 04:21:16,080][INFO] ---- Evaluation at iter 15000 ----
+[2025-11-17 04:21:16,080][INFO]   S1->S2: 98.31% (291 / 296)
+[2025-11-17 04:21:16,081][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 04:21:16,081][INFO]   S1->S3: 48.44% (218 / 450)
+[2025-11-17 04:21:16,081][INFO]   overall: 77.36% (810 / 1047)
+[2025-11-17 04:21:43,194][INFO] Iter  15050 | reward=0.938 | success=0.938 | avg_path=4.88 | pg_loss=-1.6235 | kl_loss=124.1331
+[2025-11-17 04:22:10,934][INFO] Iter  15100 | reward=0.969 | success=0.969 | avg_path=4.50 | pg_loss=-0.1986 | kl_loss=130.9287
+[2025-11-17 04:22:38,070][INFO] Iter  15150 | reward=1.000 | success=1.000 | avg_path=4.38 | pg_loss=0.6199 | kl_loss=162.7353
+[2025-11-17 04:23:05,269][INFO] Iter  15200 | reward=1.000 | success=1.000 | avg_path=4.94 | pg_loss=0.0793 | kl_loss=148.6688
+[2025-11-17 04:23:32,471][INFO] Iter  15250 | reward=0.938 | success=0.938 | avg_path=4.84 | pg_loss=-2.3355 | kl_loss=146.9622
+[2025-11-17 04:23:59,441][INFO] Iter  15300 | reward=0.969 | success=0.969 | avg_path=4.88 | pg_loss=-2.6393 | kl_loss=124.6492
+[2025-11-17 04:24:26,626][INFO] Iter  15350 | reward=0.969 | success=0.969 | avg_path=4.41 | pg_loss=-2.0201 | kl_loss=107.9355
+[2025-11-17 04:24:54,053][INFO] Iter  15400 | reward=1.000 | success=1.000 | avg_path=4.72 | pg_loss=0.0086 | kl_loss=124.6258
+[2025-11-17 04:25:21,292][INFO] Iter  15450 | reward=0.969 | success=0.969 | avg_path=5.31 | pg_loss=-0.9588 | kl_loss=122.2284
+[2025-11-17 04:25:48,413][INFO] Iter  15500 | reward=1.000 | success=1.000 | avg_path=4.91 | pg_loss=0.0030 | kl_loss=113.6883
+[2025-11-17 04:26:15,462][INFO] Iter  15550 | reward=1.000 | success=1.000 | avg_path=4.75 | pg_loss=0.1988 | kl_loss=122.0950
+[2025-11-17 04:26:42,037][INFO] Iter  15600 | reward=0.969 | success=0.969 | avg_path=4.66 | pg_loss=-1.5976 | kl_loss=127.1981
+[2025-11-17 04:27:09,168][INFO] Iter  15650 | reward=0.969 | success=0.969 | avg_path=5.41 | pg_loss=-0.7645 | kl_loss=138.2003
+[2025-11-17 04:27:36,402][INFO] Iter  15700 | reward=1.000 | success=1.000 | avg_path=4.78 | pg_loss=0.1657 | kl_loss=133.2766
+[2025-11-17 04:28:03,473][INFO] Iter  15750 | reward=1.000 | success=1.000 | avg_path=4.91 | pg_loss=2.2787 | kl_loss=137.5421
+[2025-11-17 04:28:30,399][INFO] Iter  15800 | reward=0.938 | success=0.938 | avg_path=4.28 | pg_loss=-2.6755 | kl_loss=156.4258
+[2025-11-17 04:28:57,296][INFO] Iter  15850 | reward=1.000 | success=1.000 | avg_path=5.25 | pg_loss=0.1901 | kl_loss=134.3145
+[2025-11-17 04:29:24,603][INFO] Iter  15900 | reward=0.969 | success=0.969 | avg_path=4.75 | pg_loss=-0.9755 | kl_loss=150.9971
+[2025-11-17 04:29:51,750][INFO] Iter  15950 | reward=0.938 | success=0.938 | avg_path=4.91 | pg_loss=-3.8916 | kl_loss=131.4501
+[2025-11-17 04:30:18,967][INFO] Iter  16000 | reward=0.969 | success=0.969 | avg_path=4.97 | pg_loss=0.3236 | kl_loss=115.3575
+[2025-11-17 04:30:34,621][INFO] ---- Evaluation at iter 16000 ----
+[2025-11-17 04:30:34,624][INFO]   S1->S2: 98.99% (293 / 296)
+[2025-11-17 04:30:34,624][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 04:30:34,624][INFO]   S1->S3: 69.56% (313 / 450)
+[2025-11-17 04:30:34,624][INFO]   overall: 86.63% (907 / 1047)
+[2025-11-17 04:30:34,628][INFO] Saved PG checkpoint to out_pg/pg_20251117_020015/ckpt_pg_16000.pt
+[2025-11-17 04:31:01,564][INFO] Iter  16050 | reward=0.969 | success=0.969 | avg_path=4.56 | pg_loss=-1.3913 | kl_loss=147.8856
+[2025-11-17 04:31:28,502][INFO] Iter  16100 | reward=1.000 | success=1.000 | avg_path=4.88 | pg_loss=3.0820 | kl_loss=128.3354
+[2025-11-17 04:31:55,773][INFO] Iter  16150 | reward=1.000 | success=1.000 | avg_path=4.72 | pg_loss=2.9800 | kl_loss=141.2584
+[2025-11-17 04:32:23,080][INFO] Iter  16200 | reward=0.969 | success=0.969 | avg_path=5.00 | pg_loss=-1.6598 | kl_loss=150.3747
+[2025-11-17 04:32:52,858][INFO] Iter  16250 | reward=1.000 | success=1.000 | avg_path=5.66 | pg_loss=2.1761 | kl_loss=123.4278
+[2025-11-17 04:33:22,566][INFO] Iter  16300 | reward=1.000 | success=1.000 | avg_path=5.09 | pg_loss=0.1443 | kl_loss=135.4741
+[2025-11-17 04:33:54,019][INFO] Iter  16350 | reward=1.000 | success=1.000 | avg_path=4.62 | pg_loss=0.0192 | kl_loss=121.8046
+[2025-11-17 04:34:25,275][INFO] Iter  16400 | reward=0.969 | success=0.969 | avg_path=4.84 | pg_loss=-1.2242 | kl_loss=132.5394
+[2025-11-17 04:34:55,719][INFO] Iter  16450 | reward=1.000 | success=1.000 | avg_path=4.66 | pg_loss=1.9813 | kl_loss=138.8291
+[2025-11-17 04:35:25,350][INFO] Iter  16500 | reward=1.000 | success=1.000 | avg_path=4.22 | pg_loss=1.4130 | kl_loss=107.7929
+[2025-11-17 04:35:53,726][INFO] Iter  16550 | reward=1.000 | success=1.000 | avg_path=5.12 | pg_loss=2.2688 | kl_loss=121.3255
+[2025-11-17 04:36:20,883][INFO] Iter  16600 | reward=0.969 | success=0.969 | avg_path=4.72 | pg_loss=1.8045 | kl_loss=136.6716
+[2025-11-17 04:36:50,826][INFO] Iter  16650 | reward=0.969 | success=0.969 | avg_path=5.09 | pg_loss=-1.4944 | kl_loss=135.8549
+[2025-11-17 04:37:18,370][INFO] Iter  16700 | reward=0.938 | success=0.938 | avg_path=5.00 | pg_loss=-3.5657 | kl_loss=158.1234
+[2025-11-17 04:37:45,458][INFO] Iter  16750 | reward=0.938 | success=0.938 | avg_path=4.78 | pg_loss=-4.7394 | kl_loss=138.5651
+[2025-11-17 04:38:13,907][INFO] Iter  16800 | reward=1.000 | success=1.000 | avg_path=4.91 | pg_loss=0.5637 | kl_loss=139.8873
+[2025-11-17 04:38:44,397][INFO] Iter  16850 | reward=0.969 | success=0.969 | avg_path=5.41 | pg_loss=-2.9289 | kl_loss=127.6411
+[2025-11-17 04:39:11,577][INFO] Iter  16900 | reward=0.969 | success=0.969 | avg_path=4.72 | pg_loss=0.6573 | kl_loss=125.6833
+[2025-11-17 04:39:38,453][INFO] Iter  16950 | reward=1.000 | success=1.000 | avg_path=5.00 | pg_loss=0.2334 | kl_loss=119.3988
+[2025-11-17 04:40:05,388][INFO] Iter  17000 | reward=1.000 | success=1.000 | avg_path=4.91 | pg_loss=4.3164 | kl_loss=129.9597
+[2025-11-17 04:40:21,263][INFO] ---- Evaluation at iter 17000 ----
+[2025-11-17 04:40:21,265][INFO]   S1->S2: 98.99% (293 / 296)
+[2025-11-17 04:40:21,265][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 04:40:21,265][INFO]   S1->S3: 79.33% (357 / 450)
+[2025-11-17 04:40:21,265][INFO]   overall: 90.83% (951 / 1047)
+[2025-11-17 04:40:48,437][INFO] Iter  17050 | reward=1.000 | success=1.000 | avg_path=4.81 | pg_loss=2.5523 | kl_loss=131.7352
+[2025-11-17 04:41:15,826][INFO] Iter  17100 | reward=1.000 | success=1.000 | avg_path=4.69 | pg_loss=0.0034 | kl_loss=150.5460
+[2025-11-17 04:41:42,780][INFO] Iter  17150 | reward=1.000 | success=1.000 | avg_path=4.84 | pg_loss=0.0560 | kl_loss=137.4399
+[2025-11-17 04:42:10,121][INFO] Iter  17200 | reward=1.000 | success=1.000 | avg_path=4.47 | pg_loss=0.1315 | kl_loss=118.3512
+[2025-11-17 04:42:37,336][INFO] Iter  17250 | reward=0.969 | success=0.969 | avg_path=4.75 | pg_loss=-1.8788 | kl_loss=100.5923
+[2025-11-17 04:43:04,451][INFO] Iter  17300 | reward=1.000 | success=1.000 | avg_path=4.47 | pg_loss=4.1337 | kl_loss=134.3270
+[2025-11-17 04:43:31,481][INFO] Iter  17350 | reward=0.969 | success=0.969 | avg_path=4.72 | pg_loss=-1.0881 | kl_loss=124.4358
+[2025-11-17 04:43:58,763][INFO] Iter  17400 | reward=1.000 | success=1.000 | avg_path=4.72 | pg_loss=0.0004 | kl_loss=150.7042
+[2025-11-17 04:44:25,914][INFO] Iter  17450 | reward=0.969 | success=0.969 | avg_path=5.03 | pg_loss=0.0351 | kl_loss=126.1052
+[2025-11-17 04:44:53,138][INFO] Iter  17500 | reward=0.969 | success=0.969 | avg_path=4.50 | pg_loss=-0.8288 | kl_loss=113.4375
+[2025-11-17 04:45:20,334][INFO] Iter  17550 | reward=1.000 | success=1.000 | avg_path=4.81 | pg_loss=0.0003 | kl_loss=128.8132
+[2025-11-17 04:45:47,238][INFO] Iter  17600 | reward=1.000 | success=1.000 | avg_path=4.56 | pg_loss=0.1290 | kl_loss=117.4993
+[2025-11-17 04:46:14,455][INFO] Iter  17650 | reward=1.000 | success=1.000 | avg_path=4.50 | pg_loss=1.3151 | kl_loss=119.9857
+[2025-11-17 04:46:41,506][INFO] Iter  17700 | reward=0.969 | success=0.969 | avg_path=4.59 | pg_loss=-0.7213 | kl_loss=111.3422
+[2025-11-17 04:47:08,541][INFO] Iter  17750 | reward=0.969 | success=0.969 | avg_path=4.88 | pg_loss=-0.4476 | kl_loss=93.4583
+[2025-11-17 04:47:35,592][INFO] Iter  17800 | reward=1.000 | success=1.000 | avg_path=4.72 | pg_loss=0.2066 | kl_loss=88.7815
+[2025-11-17 04:48:02,291][INFO] Iter  17850 | reward=1.000 | success=1.000 | avg_path=4.41 | pg_loss=1.7945 | kl_loss=107.5782
+[2025-11-17 04:48:29,187][INFO] Iter  17900 | reward=0.969 | success=0.969 | avg_path=5.50 | pg_loss=2.6587 | kl_loss=127.6772
+[2025-11-17 04:48:56,837][INFO] Iter  17950 | reward=0.969 | success=0.969 | avg_path=4.91 | pg_loss=-1.3741 | kl_loss=123.7537
+[2025-11-17 04:49:24,212][INFO] Iter  18000 | reward=1.000 | success=1.000 | avg_path=4.66 | pg_loss=0.0699 | kl_loss=124.5819
+[2025-11-17 04:49:39,702][INFO] ---- Evaluation at iter 18000 ----
+[2025-11-17 04:49:39,702][INFO]   S1->S2: 99.32% (294 / 296)
+[2025-11-17 04:49:39,702][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 04:49:39,702][INFO]   S1->S3: 74.89% (337 / 450)
+[2025-11-17 04:49:39,702][INFO]   overall: 89.02% (932 / 1047)
+[2025-11-17 04:49:39,706][INFO] Saved PG checkpoint to out_pg/pg_20251117_020015/ckpt_pg_18000.pt
+[2025-11-17 04:50:09,797][INFO] Iter  18050 | reward=0.938 | success=0.938 | avg_path=4.56 | pg_loss=-3.5619 | kl_loss=106.0112
+[2025-11-17 04:50:37,105][INFO] Iter  18100 | reward=0.969 | success=0.969 | avg_path=4.94 | pg_loss=-2.0898 | kl_loss=129.5245
+[2025-11-17 04:51:03,817][INFO] Iter  18150 | reward=0.969 | success=0.969 | avg_path=5.03 | pg_loss=-1.5641 | kl_loss=134.2446
+[2025-11-17 04:51:30,912][INFO] Iter  18200 | reward=0.969 | success=0.969 | avg_path=4.81 | pg_loss=-0.4658 | kl_loss=99.1805
+[2025-11-17 04:51:57,839][INFO] Iter  18250 | reward=0.938 | success=0.938 | avg_path=5.16 | pg_loss=-2.8768 | kl_loss=123.9085
+[2025-11-17 04:52:24,886][INFO] Iter  18300 | reward=1.000 | success=1.000 | avg_path=5.16 | pg_loss=0.2416 | kl_loss=117.8787
+[2025-11-17 04:52:51,986][INFO] Iter  18350 | reward=1.000 | success=1.000 | avg_path=4.69 | pg_loss=0.0100 | kl_loss=122.6439
+[2025-11-17 04:53:20,788][INFO] Iter  18400 | reward=1.000 | success=1.000 | avg_path=4.66 | pg_loss=2.8527 | kl_loss=115.2465
+[2025-11-17 04:53:50,951][INFO] Iter  18450 | reward=1.000 | success=1.000 | avg_path=4.59 | pg_loss=1.4402 | kl_loss=117.5480
+[2025-11-17 04:54:21,500][INFO] Iter  18500 | reward=0.969 | success=0.969 | avg_path=4.44 | pg_loss=-1.6354 | kl_loss=137.6404
+[2025-11-17 04:54:50,160][INFO] Iter  18550 | reward=0.969 | success=0.969 | avg_path=4.78 | pg_loss=-2.1214 | kl_loss=141.9899
+[2025-11-17 04:55:17,224][INFO] Iter  18600 | reward=1.000 | success=1.000 | avg_path=4.59 | pg_loss=1.2873 | kl_loss=98.7834
+[2025-11-17 04:55:43,872][INFO] Iter  18650 | reward=0.969 | success=0.969 | avg_path=4.91 | pg_loss=-0.9842 | kl_loss=100.2517
+[2025-11-17 04:56:10,938][INFO] Iter  18700 | reward=1.000 | success=1.000 | avg_path=4.62 | pg_loss=0.0353 | kl_loss=89.7964
+[2025-11-17 04:56:38,364][INFO] Iter  18750 | reward=0.969 | success=0.969 | avg_path=4.78 | pg_loss=-2.1791 | kl_loss=85.6629
+[2025-11-17 04:57:05,822][INFO] Iter  18800 | reward=1.000 | success=1.000 | avg_path=4.94 | pg_loss=0.0028 | kl_loss=111.6872
+[2025-11-17 04:57:36,923][INFO] Iter  18850 | reward=0.906 | success=0.906 | avg_path=4.97 | pg_loss=-4.0876 | kl_loss=90.7133
+[2025-11-17 04:58:05,494][INFO] Iter  18900 | reward=1.000 | success=1.000 | avg_path=4.47 | pg_loss=1.2492 | kl_loss=116.4357
+[2025-11-17 04:58:36,367][INFO] Iter  18950 | reward=1.000 | success=1.000 | avg_path=4.97 | pg_loss=0.0000 | kl_loss=112.5796
+[2025-11-17 04:59:05,944][INFO] Iter  19000 | reward=0.906 | success=0.906 | avg_path=5.12 | pg_loss=-5.7189 | kl_loss=119.0164
+[2025-11-17 04:59:21,760][INFO] ---- Evaluation at iter 19000 ----
+[2025-11-17 04:59:21,762][INFO]   S1->S2: 98.99% (293 / 296)
+[2025-11-17 04:59:21,762][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 04:59:21,762][INFO]   S1->S3: 69.56% (313 / 450)
+[2025-11-17 04:59:21,762][INFO]   overall: 86.63% (907 / 1047)
+[2025-11-17 04:59:48,817][INFO] Iter  19050 | reward=0.969 | success=0.969 | avg_path=5.12 | pg_loss=-1.9372 | kl_loss=107.3682
+[2025-11-17 05:00:15,925][INFO] Iter  19100 | reward=1.000 | success=1.000 | avg_path=4.50 | pg_loss=0.9419 | kl_loss=141.6750
+[2025-11-17 05:00:43,354][INFO] Iter  19150 | reward=1.000 | success=1.000 | avg_path=4.12 | pg_loss=0.1862 | kl_loss=134.4167
+[2025-11-17 05:01:13,440][INFO] Iter  19200 | reward=0.969 | success=0.969 | avg_path=4.62 | pg_loss=-2.5685 | kl_loss=111.4479
+[2025-11-17 05:01:43,560][INFO] Iter  19250 | reward=0.969 | success=0.969 | avg_path=4.72 | pg_loss=1.2651 | kl_loss=134.4847
+[2025-11-17 05:02:10,502][INFO] Iter  19300 | reward=0.938 | success=0.938 | avg_path=4.91 | pg_loss=-4.5188 | kl_loss=111.6909
+[2025-11-17 05:02:37,527][INFO] Iter  19350 | reward=1.000 | success=1.000 | avg_path=4.50 | pg_loss=0.0559 | kl_loss=101.8767
+[2025-11-17 05:03:05,463][INFO] Iter  19400 | reward=1.000 | success=1.000 | avg_path=4.97 | pg_loss=2.2314 | kl_loss=114.8207
+[2025-11-17 05:03:32,179][INFO] Iter  19450 | reward=0.969 | success=0.969 | avg_path=4.66 | pg_loss=-3.1440 | kl_loss=121.4398
+[2025-11-17 05:03:59,144][INFO] Iter  19500 | reward=0.969 | success=0.969 | avg_path=4.53 | pg_loss=0.6045 | kl_loss=122.6989
+[2025-11-17 05:04:25,890][INFO] Iter  19550 | reward=0.969 | success=0.969 | avg_path=4.28 | pg_loss=-1.3662 | kl_loss=130.0107
+[2025-11-17 05:04:52,951][INFO] Iter  19600 | reward=1.000 | success=1.000 | avg_path=4.88 | pg_loss=0.1075 | kl_loss=116.3188
+[2025-11-17 05:05:19,935][INFO] Iter  19650 | reward=1.000 | success=1.000 | avg_path=4.78 | pg_loss=0.2154 | kl_loss=130.7649
+[2025-11-17 05:05:47,043][INFO] Iter  19700 | reward=1.000 | success=1.000 | avg_path=4.97 | pg_loss=0.6034 | kl_loss=113.0225
+[2025-11-17 05:06:14,079][INFO] Iter  19750 | reward=0.938 | success=0.938 | avg_path=4.25 | pg_loss=-4.4470 | kl_loss=146.6342
+[2025-11-17 05:06:41,235][INFO] Iter  19800 | reward=0.969 | success=0.969 | avg_path=5.62 | pg_loss=-1.5713 | kl_loss=157.4604
+[2025-11-17 05:07:08,370][INFO] Iter  19850 | reward=1.000 | success=1.000 | avg_path=4.94 | pg_loss=0.0042 | kl_loss=122.8866
+[2025-11-17 05:07:35,340][INFO] Iter  19900 | reward=1.000 | success=1.000 | avg_path=4.88 | pg_loss=0.1927 | kl_loss=143.5544
+[2025-11-17 05:08:02,213][INFO] Iter  19950 | reward=1.000 | success=1.000 | avg_path=4.56 | pg_loss=0.0418 | kl_loss=105.4021
+[2025-11-17 05:08:29,046][INFO] Iter  20000 | reward=0.969 | success=0.969 | avg_path=4.47 | pg_loss=-2.3540 | kl_loss=112.6030
+[2025-11-17 05:08:45,078][INFO] ---- Evaluation at iter 20000 ----
+[2025-11-17 05:08:45,081][INFO]   S1->S2: 99.32% (294 / 296)
+[2025-11-17 05:08:45,081][INFO]   S2->S3: 100.00% (301 / 301)
+[2025-11-17 05:08:45,081][INFO]   S1->S3: 57.33% (258 / 450)
+[2025-11-17 05:08:45,081][INFO]   overall: 81.47% (853 / 1047)
+[2025-11-17 05:08:45,085][INFO] Saved PG checkpoint to out_pg/pg_20251117_020015/ckpt_pg_20000.pt
+[2025-11-17 05:08:45,085][INFO] PG training finished.
