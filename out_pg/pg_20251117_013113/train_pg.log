@@ -1,0 +1,3 @@
+[2025-11-17 01:31:13,714][INFO] Policy Gradient training started.
+[2025-11-17 01:31:13,714][INFO] Output directory: out_pg/pg_20251117_013113
+[2025-11-17 01:31:13,714][INFO] KL coefficient: 0.000300

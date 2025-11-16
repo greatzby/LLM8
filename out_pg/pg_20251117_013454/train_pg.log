@@ -1,0 +1,4 @@
+[2025-11-17 01:34:54,074][INFO] Policy Gradient training started.
+[2025-11-17 01:34:54,074][INFO] Output directory: out_pg/pg_20251117_013454
+[2025-11-17 01:34:54,074][INFO] KL coefficient: 0.000300
+[2025-11-17 01:34:54,776][INFO] Loaded 1127 unique (source, target) pairs for PG training.

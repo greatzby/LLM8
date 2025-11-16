@@ -1,0 +1,28 @@
+[2025-11-17 01:44:20,387][INFO] Policy Gradient training started.
+[2025-11-17 01:44:20,387][INFO] Output directory: out_pg/pg_20251117_014420
+[2025-11-17 01:44:20,387][INFO] KL coefficient: 0.000300
+[2025-11-17 01:44:20,388][WARNING] Using block_size=64 (override / checkpoint) while dataset meta reports 32.
+[2025-11-17 01:44:20,388][INFO] Resolved model configuration: {"vocab_size": 92, "block_size": 64, "n_layer": 1, "n_head": 1, "n_embd": 92, "dropout": 0.0, "bias": false}
+[2025-11-17 01:44:21,074][WARNING] 扩容 block_size：checkpoint=32 -> 当前模型=64。新位置的嵌入使用模型随机初始化。
+[2025-11-17 01:44:21,076][WARNING] 扩容 block_size：checkpoint=32 -> 当前模型=64。新位置的嵌入使用模型随机初始化。
+[2025-11-17 01:44:21,087][INFO] Loaded 1127 unique (source, target) pairs for PG training.
+[2025-11-17 01:44:48,605][INFO] Iter     50 | reward=0.000 | success=0.000 | avg_path=3.34 | pg_loss=-0.0000 | kl_loss=0.7849
+[2025-11-17 01:45:15,493][INFO] Iter    100 | reward=0.000 | success=0.000 | avg_path=3.56 | pg_loss=-0.0000 | kl_loss=0.6770
+[2025-11-17 01:45:42,445][INFO] Iter    150 | reward=0.000 | success=0.000 | avg_path=3.53 | pg_loss=-0.0000 | kl_loss=2.0182
+[2025-11-17 01:46:09,354][INFO] Iter    200 | reward=0.000 | success=0.000 | avg_path=3.69 | pg_loss=-0.0000 | kl_loss=2.6632
+[2025-11-17 01:46:36,049][INFO] Iter    250 | reward=0.000 | success=0.000 | avg_path=4.09 | pg_loss=-0.0001 | kl_loss=3.7199
+[2025-11-17 01:47:02,847][INFO] Iter    300 | reward=0.000 | success=0.000 | avg_path=3.66 | pg_loss=-0.1684 | kl_loss=5.2637
+[2025-11-17 01:47:29,823][INFO] Iter    350 | reward=0.000 | success=0.000 | avg_path=4.12 | pg_loss=-0.1669 | kl_loss=9.0241
+[2025-11-17 01:47:56,773][INFO] Iter    400 | reward=0.031 | success=0.031 | avg_path=4.56 | pg_loss=1.5545 | kl_loss=12.2177
+[2025-11-17 01:48:23,730][INFO] Iter    450 | reward=0.031 | success=0.031 | avg_path=5.47 | pg_loss=-0.5612 | kl_loss=17.2490
+[2025-11-17 01:48:50,936][INFO] Iter    500 | reward=0.031 | success=0.031 | avg_path=4.50 | pg_loss=-0.7190 | kl_loss=26.9114
+[2025-11-17 01:49:17,835][INFO] Iter    550 | reward=0.000 | success=0.000 | avg_path=5.34 | pg_loss=-0.0939 | kl_loss=32.2763
+[2025-11-17 01:49:44,622][INFO] Iter    600 | reward=0.031 | success=0.031 | avg_path=5.50 | pg_loss=-1.5980 | kl_loss=25.9780
+[2025-11-17 01:50:11,509][INFO] Iter    650 | reward=0.062 | success=0.062 | avg_path=5.09 | pg_loss=-2.5078 | kl_loss=30.3708
+[2025-11-17 01:50:38,260][INFO] Iter    700 | reward=0.031 | success=0.031 | avg_path=5.44 | pg_loss=-1.5139 | kl_loss=33.1883
+[2025-11-17 01:51:05,234][INFO] Iter    750 | reward=0.156 | success=0.156 | avg_path=5.00 | pg_loss=0.2734 | kl_loss=33.6153
+[2025-11-17 01:51:32,234][INFO] Iter    800 | reward=0.156 | success=0.156 | avg_path=5.50 | pg_loss=1.4107 | kl_loss=31.8203
+[2025-11-17 01:51:59,059][INFO] Iter    850 | reward=0.219 | success=0.219 | avg_path=5.44 | pg_loss=-1.3673 | kl_loss=32.4887
+[2025-11-17 01:52:25,761][INFO] Iter    900 | reward=0.188 | success=0.188 | avg_path=5.22 | pg_loss=0.6592 | kl_loss=30.8784
+[2025-11-17 01:52:53,104][INFO] Iter    950 | reward=0.281 | success=0.281 | avg_path=5.41 | pg_loss=0.5664 | kl_loss=41.8949
+[2025-11-17 01:53:23,536][INFO] Iter   1000 | reward=0.344 | success=0.344 | avg_path=5.06 | pg_loss=0.3185 | kl_loss=27.3269
