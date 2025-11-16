@@ -91,7 +91,7 @@ def parse_args() -> argparse.Namespace:
                         help="每次 rollout 最多生成多少 token（不含提示）。")
     parser.add_argument("--rollout_temperature", type=float, default=1.2,
                         help="rollout 温度，建议 ≥1 便于探索。")
-    parser.add_argument("--rollout_top_k", type:int, default=0,
+    parser.add_argument("--rollout_top_k", type=int, default=0,
                         help="rollout 采样时的 top-k（<=0 表示不截断）。")
     parser.add_argument("--allow_invalid_continue", action="store_true",
                         help="遇到非法跳转时继续生成（默认遇到非法即终止当前 trajectory）。")
