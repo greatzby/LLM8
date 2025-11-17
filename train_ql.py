@@ -3,10 +3,17 @@
 """
 Q-Learning fine-tuning script for GraphA Tier-3 datasets.
 
-参考用法（与 PG 脚本保持接口一致）：
+关键改动：
+  1. rollout 温度 & ε-greedy 均支持分段调度（冷启动阶段几乎完全照抄 SFT）。
+  2. 过程奖励新增正向 shaping：合法边奖励、Stage-2 桥接奖励、停早惩罚等。
+  3. 支持“多次犯错后才终止”，让轨迹不再一次无效就崩。
+  4. 可选 KL 正则，把策略约束在 SFT 周围，稳定性大幅提高。
+  5. 强制避免 block_size 扩容导致位置编码随机初始化。
+
+推荐用法示例：
     python train_qlearning.py \
         --data_dir data/datasets/graphA_pg020_tier3 \
-        --sft_checkpoint out/sft_run/ckpt_50000.pt \
+        --sft_checkpoint out/composition_20251022_124024/ckpt_5000.pt \
         --train_paths_per_pair 20 \
         --device cuda:0 \
         --max_iters 20000 \
@@ -14,11 +21,26 @@ Q-Learning fine-tuning script for GraphA Tier-3 datasets.
         --save_interval 2000 \
         --batch_size 32 \
         --max_rollout_steps 32 \
-        --rollout_temperature 1.2 \
-        --target_ema 0.99 \
+        --rollout_temp_start 0.0 \
+        --rollout_temp_end 1.0 \
+        --temp_warmup_iters 8000 \
+        --epsilon_start 0.2 \
+        --epsilon_end 0.05 \
+        --epsilon_warmup_iters 12000 \
         --reward_type process \
-        --reward_hit_target 1.0 \
-        --reward_invalid_transition 1.0
+        --reward_hit_target 1.5 \
+        --reward_valid_transition 0.1 \
+        --reward_stage_bridge 0.2 \
+        --reward_stage_bridge_only_once \
+        --reward_invalid_transition 0.25 \
+        --reward_invalid_token 1.0 \
+        --reward_stop -0.1 \
+        --allow_invalid_continue \
+        --max_invalid_transitions 2 \
+        --target_ema 0.995 \
+        --kl_coef 0.05 \
+        --kl_warmup_iters 0 \
+        --kl_anneal_iters 12000
 """
 
 from __future__ import annotations
@@ -47,6 +69,7 @@ PathList = List[int]
 Pair = Tuple[int, int]
 BucketName = str
 
+
 # -----------------------------------------------------------------------------
 # 命令行参数
 # -----------------------------------------------------------------------------
@@ -55,88 +78,131 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data_dir", type=str, required=True,
                         help="数据集目录（包含 train_K.txt、meta.pkl、stage_info.pkl 等文件）。")
     parser.add_argument("--sft_checkpoint", type=str, required=True,
-                        help="SFT 训练得到的 checkpoint (.pt)，作为 RL 初始化。")
+                        help="SFT checkpoint (.pt)，作为 Q-learning 初始化和 KL 参考。")
     parser.add_argument("--train_paths_per_pair", type=int, default=20,
                         help="对应 train_{K}.txt 中 K 的取值。")
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--seed", type=int, default=42)
 
-    # 模型结构可选覆盖
-    parser.add_argument("--n_layer", type=int, default=None,
-                        help="覆盖模型层数；默认从 checkpoint 读取。")
-    parser.add_argument("--n_head", type=int, default=None,
-                        help="覆盖注意力头数；默认从 checkpoint 读取。")
-    parser.add_argument("--n_embd", type=int, default=None,
-                        help="覆盖 embedding/hidden size；默认从 checkpoint 读取。")
-    parser.add_argument("--dropout", type=float, default=None,
-                        help="覆盖 dropout；默认从 checkpoint 读取。")
-    parser.add_argument("--bias", type=str, choices=["true", "false"], default=None,
-                        help="覆盖线性层是否带偏置；默认从 checkpoint 读取。")
+    # 模型结构可选覆盖（不建议随意修改）
+    parser.add_argument("--n_layer", type=int, default=None)
+    parser.add_argument("--n_head", type=int, default=None)
+    parser.add_argument("--n_embd", type=int, default=None)
+    parser.add_argument("--dropout", type=float, default=None)
+    parser.add_argument("--bias", type=str, choices=["true", "false"], default=None)
     parser.add_argument("--block_size_override", type=int, default=None,
-                        help="覆盖模型 block_size；默认使用 checkpoint 或数据集 meta。")
+                        help="如需缩小 block_size，可设置此参数；不允许扩容。")
 
-    # Q-learning 超参数
-    parser.add_argument("--max_iters", type=int, default=20000,
-                        help="Q-learning 更新步数。")
-    parser.add_argument("--batch_size", type=int, default=32,
-                        help="每次 Q-learning 更新包含多少 (s, t) 对。")
-    parser.add_argument("--learning_rate", type=float, default=5e-5,
-                        help="学习率。")
-    parser.add_argument("--grad_clip", type=float, default=1.0,
-                        help="梯度裁剪阈值。")
-    parser.add_argument("--gamma", type=float, default=1.0,
-                        help="折扣因子，默认 1（与论文中假设一致）。")
+    # Q-learning 超参
+    parser.add_argument("--max_iters", type=int, default=20000)
+    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--learning_rate", type=float, default=3e-5)
+    parser.add_argument("--grad_clip", type=float, default=1.0)
+    parser.add_argument("--gamma", type=float, default=1.0)
 
-    parser.add_argument("--max_rollout_steps", type=int, default=32,
-                        help="每次 rollout 最多生成多少 token（不含提示）。")
-    parser.add_argument("--rollout_temperature", type=float, default=1.2,
-                        help="rollout 温度，建议 ≥1 便于探索。")
-    parser.add_argument("--rollout_top_k", type=int, default=0,
-                        help="rollout 采样时的 top-k（<=0 表示不截断）。")
+    parser.add_argument("--max_rollout_steps", type=int, default=32)
+    parser.add_argument("--rollout_top_k", type=int, default=1,
+                        help="rollout 采样时的 top-k；默认 1 搭配温度调度使用。")
+
+    # rollout 温度调度
+    parser.add_argument("--rollout_temperature", type=float, default=None,
+                        help="若设置此参数，则温度固定为该值（兼容旧脚本）。")
+    parser.add_argument("--rollout_temp_start", type=float, default=0.0)
+    parser.add_argument("--rollout_temp_end", type=float, default=1.0)
+    parser.add_argument("--temp_warmup_iters", type=int, default=8000)
+
+    # ε-greedy 调度
+    parser.add_argument("--epsilon_start", type=float, default=0.0)
+    parser.add_argument("--epsilon_end", type=float, default=0.0)
+    parser.add_argument("--epsilon_warmup_iters", type=int, default=0)
+
+    # 无效边处理
     parser.add_argument("--allow_invalid_continue", action="store_true",
-                        help="遇到非法跳转时继续生成（默认遇到非法即终止当前 trajectory）。")
+                        help="允许遇到非法边后继续生成，否则立即终止。")
+    parser.add_argument("--max_invalid_transitions", type=int, default=2,
+                        help="允许连续多少次非法边后强制终止（需配合 --allow_invalid_continue）。")
 
-    parser.add_argument("--reward_type", choices=["process", "outcome"], default="process",
-                        help="奖励类型，默认使用 process reward（论文 Takeaway 5 推荐）。")
-    parser.add_argument("--reward_hit_target", type=float, default=1.0,
-                        help="命中目标节点时的奖励（process/outcome 共用）。")
-    parser.add_argument("--reward_invalid_transition", type=float, default=1.0,
-                        help="非法边的惩罚（仅 process reward 起作用）。")
-    parser.add_argument("--reward_invalid_token", type=float, default=1.0,
-                        help="生成非节点 token 的惩罚。")
-    parser.add_argument("--reward_stop", type=float, default=0.0,
-                        help="生成终止 token（换行）时的额外奖励。")
+    # 奖励设置
+    parser.add_argument("--reward_type", choices=["process", "outcome"], default="process")
+    parser.add_argument("--reward_hit_target", type=float, default=1.5)
+    parser.add_argument("--reward_valid_transition", type=float, default=0.1,
+                        help="每走一条合法边的正奖励。")
+    parser.add_argument("--reward_stage_bridge", type=float, default=0.2,
+                        help="S1->S3 任务首次触达 Stage-2 节点时的奖励。")
+    parser.add_argument("--reward_stage_bridge_only_once", action="store_true",
+                        help="达到 Stage-2 只奖励一次（默认 true）。")
+    parser.add_argument("--reward_invalid_transition", type=float, default=0.25)
+    parser.add_argument("--reward_invalid_token", type=float, default=1.0)
+    parser.add_argument("--reward_stop", type=float, default=-0.1,
+                        help="提前生成终止 token 的额外惩罚。")
 
-    parser.add_argument("--target_ema", type=float, default=0.0,
-                        help="目标网络 EMA 系数（0 表示不使用目标网络）。推荐 0.99~0.999。")
+    # 目标网络
+    parser.add_argument("--target_ema", type=float, default=0.995,
+                        help="目标网络 EMA 系数（0 表示不用 EMA）。")
     parser.add_argument("--target_sync_interval", type=int, default=0,
-                        help="未使用 EMA 时，周期性硬同步目标网络（0 表示关闭）。")
+                        help="当 EMA=0 时，周期性硬同步目标网络（0 表示关闭）。")
+
+    # KL 正则
+    parser.add_argument("--kl_coef", type=float, default=0.05,
+                        help="KL 正则系数（0 表示关闭 KL 约束）。")
+    parser.add_argument("--kl_warmup_iters", type=int, default=0,
+                        help="KL 维持原值的迭代数（0 表示无 warmup）。")
+    parser.add_argument("--kl_anneal_iters", type=int, default=12000,
+                        help="KL 系数线性衰减到 0 的总步数（0 表示不衰减）。")
 
     # 评估 & 日志
-    parser.add_argument("--eval_interval", type=int, default=1000,
-                        help="每隔多少 step 进行一次评估。")
-    parser.add_argument("--save_interval", type=int, default=2000,
-                        help="每隔多少 step 保存一次模型。")
-    parser.add_argument("--max_eval_pairs", type=int, default=5000,
-                        help="评估使用的 (s, t) 对数量上限。")
-    parser.add_argument("--eval_temperature", type=float, default=0.0,
-                        help="评估时的温度，建议 0 表示 greedy。")
-    parser.add_argument("--eval_top_k", type=int, default=0,
-                        help="评估时的 top-k（<=0 表示 greedy）。")
+    parser.add_argument("--eval_interval", type=int, default=1000)
+    parser.add_argument("--save_interval", type=int, default=2000)
+    parser.add_argument("--max_eval_pairs", type=int, default=5000)
+    parser.add_argument("--eval_temperature", type=float, default=0.0)
+    parser.add_argument("--eval_top_k", type=int, default=0)
+    parser.add_argument("--log_dir", type=str, default="out_qlearning")
 
-    parser.add_argument("--log_dir", type=str, default="out_qlearning",
-                        help="日志与 checkpoint 输出目录。")
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    # 向下兼容：如果显式给了 rollout_temperature，则覆盖调度
+    if args.rollout_temperature is not None:
+        args.rollout_temp_start = args.rollout_temperature
+        args.rollout_temp_end = args.rollout_temperature
+        args.temp_warmup_iters = 0
+
+    return args
 
 
 # -----------------------------------------------------------------------------
-# 工具函数（沿用 PG 脚本）
+# 工具 & 调度函数
 # -----------------------------------------------------------------------------
 def set_seed(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
+def current_temperature(iteration: int, args: argparse.Namespace) -> float:
+    if args.temp_warmup_iters <= 0 or args.rollout_temp_start == args.rollout_temp_end:
+        return args.rollout_temp_end
+    ratio = min(1.0, iteration / max(1, args.temp_warmup_iters))
+    return args.rollout_temp_start + ratio * (args.rollout_temp_end - args.rollout_temp_start)
+
+
+def current_epsilon(iteration: int, args: argparse.Namespace) -> float:
+    if args.epsilon_warmup_iters <= 0 or args.epsilon_start == args.epsilon_end:
+        return args.epsilon_end
+    ratio = min(1.0, iteration / max(1, args.epsilon_warmup_iters))
+    return args.epsilon_start + ratio * (args.epsilon_end - args.epsilon_start)
+
+
+def current_kl_coef(iteration: int, args: argparse.Namespace) -> float:
+    if args.kl_coef <= 0.0:
+        return 0.0
+    if iteration <= args.kl_warmup_iters:
+        return args.kl_coef
+    if args.kl_anneal_iters <= 0:
+        return args.kl_coef
+    progress = min(1.0, (iteration - args.kl_warmup_iters) / max(1, args.kl_anneal_iters))
+    return max(0.0, args.kl_coef * (1.0 - progress))
 
 
 def decode_tokens(token_ids: Sequence[int],
@@ -279,7 +345,7 @@ def load_state_dict_with_block_resize(model: GPT,
 
 
 # -----------------------------------------------------------------------------
-# 评估函数（保持与 PG 版本一致，方便对比）
+# 评估（保持与 PG 脚本一致）
 # -----------------------------------------------------------------------------
 @torch.no_grad()
 def evaluate_model(model: GPT,
@@ -357,7 +423,7 @@ def evaluate_model(model: GPT,
 
 
 # -----------------------------------------------------------------------------
-# Q-learning 辅助函数
+# Q-learning 相关函数
 # -----------------------------------------------------------------------------
 def forward_logits_and_actions(model: GPT,
                                traj_ids: List[int],
@@ -381,12 +447,11 @@ def compute_q_learning_loss(model: GPT,
                             dones: List[bool],
                             action_start: int,
                             device: torch.device,
-                            gamma: float) -> Optional[Tuple[Tensor, Tensor]]:
+                            gamma: float,
+                            return_logits: bool = False) -> Optional[Dict[str, Tensor]]:
     """
-    根据论文 (Eq.2) 计算每条轨迹的 Q-learning 损失。
-    返回：
-        loss: 标量张量
-        td_error: (num_steps,) 的张量（已 detach），用于日志统计
+    根据论文 (Eq.2) 计算单条轨迹的 Q-learning 损失。
+    返回包含 loss、td_error，以及可选的 policy_logits 等字段。
     """
     if len(actions) == 0:
         return None
@@ -402,13 +467,12 @@ def compute_q_learning_loss(model: GPT,
     rewards_tensor = torch.tensor(rewards, dtype=torch.float32, device=device)
     dones_tensor = torch.tensor(dones, dtype=torch.bool, device=device)
 
-    # sanity check：teacher forcing 的 y_ids 与我们记录的 actions 应一致
     expected_actions = y_ids[start_idx:start_idx + num_steps]
     if expected_actions.shape != actions_tensor.shape or not torch.equal(expected_actions, actions_tensor):
         raise ValueError("动作序列与模型 teacher forcing 输出不一致，可能出现截断/对齐问题。")
 
-    q_seq = logits[start_idx:start_idx + num_steps, :]  # [num_steps, vocab]
-    q_selected = q_seq.gather(-1, actions_tensor.unsqueeze(-1)).squeeze(-1)  # [num_steps]
+    policy_segment = logits[start_idx:start_idx + num_steps, :]
+    q_selected = policy_segment.gather(-1, actions_tensor.unsqueeze(-1)).squeeze(-1)
 
     with torch.no_grad():
         if target_model is None:
@@ -417,19 +481,84 @@ def compute_q_learning_loss(model: GPT,
             target_logits, _ = forward_logits_and_actions(target_model, traj_ids, device)
             target_logits = target_logits.detach()
 
-        target_seq = target_logits[start_idx:start_idx + num_steps, :]
+        target_segment = target_logits[start_idx:start_idx + num_steps, :]
         next_max = torch.zeros_like(q_selected)
 
         if num_steps > 1:
-            next_max[:-1] = target_seq[1:].max(dim=-1).values
-        next_max[-1] = 0.0  # 末步没有后续
+            next_max[:-1] = target_segment[1:].max(dim=-1).values
+        next_max[-1] = 0.0
         next_max = next_max * (~dones_tensor)
 
         targets = rewards_tensor + gamma * next_max
 
     loss = F.mse_loss(q_selected, targets, reduction="mean")
     td_error = (q_selected - targets).detach()
-    return loss, td_error
+
+    result: Dict[str, Tensor] = {
+        "loss": loss,
+        "td_error": td_error,
+    }
+    if return_logits:
+        result["policy_logits"] = policy_segment
+        result["actions_tensor"] = actions_tensor
+        result["start_idx"] = torch.tensor(start_idx, device=device)
+    return result
+
+
+def select_next_token(logits: Tensor,
+                      temperature: float,
+                      top_k: int,
+                      epsilon: float) -> int:
+    """
+    根据温度、top-k 和 ε-greedy 采样下一个 token。
+    """
+    logits = logits.detach().clone()
+    vocab_size = logits.size(-1)
+    topk_indices = None
+
+    if top_k > 0 and top_k < vocab_size:
+        top_vals, topk_indices = torch.topk(logits, top_k)
+        mask = torch.full_like(logits, float("-inf"))
+        mask.scatter_(0, topk_indices, top_vals)
+        logits = mask
+
+    if epsilon > 0.0 and random.random() < epsilon:
+        if topk_indices is not None:
+            idx = topk_indices[torch.randint(0, topk_indices.size(0), (1,), device=logits.device)]
+        else:
+            idx = torch.randint(0, vocab_size, (1,), device=logits.device)
+        return int(idx.item())
+
+    if temperature <= 1e-6:
+        return int(torch.argmax(logits).item())
+
+    scaled_logits = logits / max(temperature, 1e-6)
+    probs = F.softmax(scaled_logits, dim=-1)
+    next_token = torch.multinomial(probs, num_samples=1)
+    return int(next_token.item())
+
+
+def build_prompt(source: int,
+                 target: int,
+                 stoi: Dict[str, int]) -> List[int]:
+    return [
+        stoi[str(source)],
+        stoi[str(target)],
+        stoi[str(source)],
+    ]
+
+
+def build_traj_ids(prompt_ids: List[int],
+                   sampled_ids: List[int],
+                   stop_token_id: int,
+                   block_size: int) -> List[int]:
+    traj = prompt_ids + sampled_ids
+    if len(traj) >= block_size:
+        traj = traj[:block_size - 1]
+    if not sampled_ids or sampled_ids[-1] != stop_token_id:
+        if len(traj) < block_size:
+            traj.append(stop_token_id)
+    return traj
 
 
 def sample_trajectory(model: GPT,
@@ -442,73 +571,91 @@ def sample_trajectory(model: GPT,
                       itos: Dict[int, str],
                       graph: nx.DiGraph,
                       stages: Sequence[Sequence[int]],
+                      stage_sets: Dict[str, set[int]],
                       stop_token_id: int,
                       device: torch.device,
-                      block_size: int) -> Dict[str, object]:
+                      block_size: int,
+                      temperature: float,
+                      epsilon: float) -> Dict[str, object]:
     """
-    采样一条轨迹，计算 step-level 奖励并返回训练所需字段。
+    手动 rollout 一条轨迹，返回训练所需字段。
     """
-    x = torch.tensor(prompt_ids, dtype=torch.long, device=device).unsqueeze(0)
-    with torch.no_grad():
-        generated = model.generate(
-            x,
-            max_new_tokens=max_new_tokens,
-            temperature=args.rollout_temperature,
-            top_k=args.rollout_top_k if args.rollout_top_k > 0 else None,
-        )[0].tolist()
-
-    generated_after_prompt = generated[len(prompt_ids):]
+    model_was_training = model.training
+    if model_was_training:
+        model.eval()
 
     sampled_ids: List[int] = []
+    decoded_tokens: List[str] = []
     rewards: List[float] = []
     dones: List[bool] = []
 
+    traj_ids = prompt_ids.copy()
     current_node = source
     hit_target = False
     invalid_transition = False
     invalid_token = False
+    visited_stage2 = False
+    stage_bridge_rewarded = False
+    valid_transition_steps = 0
+    invalid_transition_steps = 0
 
-    for token_id in generated_after_prompt:
-        token_id = int(token_id)
-        token_str = itos.get(token_id, "[UNK]")
+    allow_continue = args.allow_invalid_continue
+    max_invalid = max(1, args.max_invalid_transitions) if allow_continue else 1
+
+    for step in range(max_new_tokens):
+        if len(traj_ids) >= block_size - 1:
+            break
+
+        context = torch.tensor(traj_ids, dtype=torch.long, device=device).unsqueeze(0)
+        with torch.no_grad():
+            logits, _ = model(context)
+        step_logits = logits[0, -1, :]
+
+        next_token_id = select_next_token(
+            logits=step_logits,
+            temperature=temperature,
+            top_k=args.rollout_top_k,
+            epsilon=epsilon,
+        )
+
+        traj_ids.append(next_token_id)
+        sampled_ids.append(next_token_id)
+
+        token_str = itos.get(int(next_token_id), "[UNK]")
+        decoded_tokens.append(token_str)
+
         reward = 0.0
         done = False
 
-        sampled_ids.append(token_id)
-
-        if token_id == stop_token_id:
+        if next_token_id == stop_token_id:
+            reward += args.reward_stop
             done = True
         elif token_str.isdigit():
             next_node = int(token_str)
             adjacency = graph.has_edge(str(current_node), str(next_node))
 
-            if args.reward_type == "process":
+            if adjacency:
+                valid_transition_steps += 1
+                reward += args.reward_valid_transition
+                if not visited_stage2 and next_node in stage_sets.get("S2", set()):
+                    reward += args.reward_stage_bridge
+                    visited_stage2 = True
+                    if args.reward_stage_bridge_only_once:
+                        stage_bridge_rewarded = True
+                current_node = next_node
                 if next_node == target:
                     reward += args.reward_hit_target
                     hit_target = True
                     done = True
-                if not adjacency:
-                    reward -= args.reward_invalid_transition
-                    invalid_transition = True
-                    if not args.allow_invalid_continue:
-                        done = True
-                else:
-                    current_node = next_node
-            else:  # outcome reward
-                if not adjacency:
-                    invalid_transition = True
-                    if not args.allow_invalid_continue:
-                        done = True
-                else:
-                    current_node = next_node
-                if next_node == target:
-                    hit_target = True
-                    done = True  # outcome reward中，一旦命中目标即可结束（与过程奖励保持一致）
-
+            else:
+                invalid_transition = True
+                invalid_transition_steps += 1
+                reward -= args.reward_invalid_transition
+                if not allow_continue or invalid_transition_steps >= max_invalid:
+                    done = True
         else:
-            # 非数字 token（如 [PAD] 或 stage 标签）
-            reward -= args.reward_invalid_token
             invalid_token = True
+            reward -= args.reward_invalid_token
             done = True
 
         rewards.append(float(reward))
@@ -517,22 +664,22 @@ def sample_trajectory(model: GPT,
         if done:
             break
 
-    # 确保以终止 token 结尾
+    if model_was_training:
+        model.train()
+
     if not sampled_ids or sampled_ids[-1] != stop_token_id:
         sampled_ids.append(stop_token_id)
         rewards.append(float(args.reward_stop))
         dones.append(True)
-    else:
-        rewards[-1] += float(args.reward_stop)
-        dones[-1] = True
 
     traj_ids = build_traj_ids(prompt_ids, sampled_ids, stop_token_id, block_size)
     decoded_tokens = decode_tokens(sampled_ids, itos, stop_token_id)
     path_nodes = tokens_to_nodes(decoded_tokens)
+    if not path_nodes or path_nodes[0] != source:
+        path_nodes = [source] + path_nodes
     success = is_valid_path(path_nodes, source, target, stages, graph)
 
     if args.reward_type == "outcome":
-        # 仅在路径合法且命中目标时给奖励，其他步骤奖励为 0
         adjusted_rewards = [0.0 for _ in rewards]
         if success and hit_target:
             target_token = str(target)
@@ -560,31 +707,11 @@ def sample_trajectory(model: GPT,
         "hit_target": hit_target and success,
         "invalid_transition": invalid_transition,
         "invalid_token": invalid_token,
+        "visited_stage2": visited_stage2 or stage_bridge_rewarded,
+        "valid_transition_steps": valid_transition_steps,
+        "invalid_transition_steps": invalid_transition_steps,
         "bucket": bucket,
     }
-
-
-def build_prompt(source: int,
-                 target: int,
-                 stoi: Dict[str, int]) -> List[int]:
-    return [
-        stoi[str(source)],
-        stoi[str(target)],
-        stoi[str(source)],
-    ]
-
-
-def build_traj_ids(prompt_ids: List[int],
-                   sampled_ids: List[int],
-                   stop_token_id: int,
-                   block_size: int) -> List[int]:
-    traj = prompt_ids + sampled_ids
-    if len(traj) >= block_size:
-        traj = traj[:block_size - 1]
-    if not sampled_ids or sampled_ids[-1] != stop_token_id:
-        if len(traj) < block_size:
-            traj.append(stop_token_id)
-    return traj
 
 
 # -----------------------------------------------------------------------------
@@ -614,6 +741,11 @@ def main() -> None:
     with open(data_dir / "stage_info.pkl", "rb") as f:
         stage_info = pickle.load(f)
     stages: List[List[int]] = stage_info["stages"]
+    stage_sets = {
+        "S1": set(stages[0]) if len(stages) > 0 else set(),
+        "S2": set(stages[1]) if len(stages) > 1 else set(),
+        "S3": set(stages[2]) if len(stages) > 2 else set(),
+    }
 
     graph = nx.read_graphml(data_dir / "composition_graph.graphml")
 
@@ -641,10 +773,15 @@ def main() -> None:
             return bool(ckpt_model_args["bias"])
         return default_value
 
-    resolved_block_size = resolve_numeric("block_size_override", "block_size", dataset_block_size)
-    if resolved_block_size != dataset_block_size:
-        logger.warning("使用 block_size=%d（override/checkpoint），数据 meta 为 %d。",
-                       resolved_block_size, dataset_block_size)
+    resolved_block_size = dataset_block_size
+    if args.block_size_override is not None:
+        if args.block_size_override > dataset_block_size:
+            raise ValueError(
+                f"不允许将 block_size 扩容（override={args.block_size_override}, dataset={dataset_block_size})。"
+            )
+        resolved_block_size = args.block_size_override
+    elif ckpt_model_args and "block_size" in ckpt_model_args:
+        resolved_block_size = int(ckpt_model_args["block_size"])
 
     model_args = dict(
         vocab_size=vocab_size,
@@ -684,6 +821,23 @@ def main() -> None:
     else:
         target_model = None
 
+    if args.kl_coef > 0.0:
+        sft_ref_model = GPT(GPTConfig(**model_args)).to(device)
+        load_state_dict_with_block_resize(
+            model=sft_ref_model,
+            raw_state_dict=ckpt["model"],
+            ckpt_block_size=ckpt_block_size,
+            logger=logger,
+        )
+        sft_ref_model.eval()
+        for p in sft_ref_model.parameters():
+            p.requires_grad = False
+        logger.info("KL 正则启用：coef=%.4f, warmup=%d, anneal=%d",
+                    args.kl_coef, args.kl_warmup_iters, args.kl_anneal_iters)
+    else:
+        sft_ref_model = None
+        logger.info("KL 正则禁用。")
+
     optimizer = model.configure_optimizers(
         weight_decay=1e-1,
         learning_rate=args.learning_rate,
@@ -708,7 +862,7 @@ def main() -> None:
 
     rollout_cap = safe_max_new_tokens(model.config.block_size, prompt_len, args.max_rollout_steps)
     if rollout_cap < args.max_rollout_steps:
-        logger.warning("请求的 max_rollout_steps=%d 超出 block_size=%d，实际截断为 %d。",
+        logger.warning("max_rollout_steps=%d 超出 block_size=%d，实际截断为 %d。",
                        args.max_rollout_steps, model.config.block_size, rollout_cap)
 
     model.train()
@@ -719,9 +873,12 @@ def main() -> None:
 
         q_losses: List[Tensor] = []
         td_errors: List[float] = []
+        kl_losses: List[float] = []
         episode_rewards: List[float] = []
         step_rewards: List[float] = []
         path_lengths: List[int] = []
+        valid_transition_list: List[int] = []
+        invalid_transition_steps_list: List[int] = []
 
         bucket_success_sum = defaultdict(float)
         bucket_counts = defaultdict(int)
@@ -730,6 +887,11 @@ def main() -> None:
         hit_target_count = 0
         invalid_transition_count = 0
         invalid_token_count = 0
+        stage2_visit_count = 0
+
+        temperature = current_temperature(iteration, args)
+        epsilon = current_epsilon(iteration, args)
+        kl_coef_current = current_kl_coef(iteration, args)
 
         for source, target in batch_pairs:
             prompt_ids = build_prompt(source, target, stoi)
@@ -745,11 +907,15 @@ def main() -> None:
                 itos=itos,
                 graph=graph,
                 stages=stages,
+                stage_sets=stage_sets,
                 stop_token_id=stop_token_id,
                 device=device,
                 block_size=model.config.block_size,
+                temperature=temperature,
+                epsilon=epsilon,
             )
 
+            need_policy_logits = kl_coef_current > 0.0
             loss_result = compute_q_learning_loss(
                 model=model,
                 target_model=target_model,
@@ -760,23 +926,49 @@ def main() -> None:
                 action_start=action_start,
                 device=device,
                 gamma=args.gamma,
+                return_logits=need_policy_logits,
             )
 
             if loss_result is None:
                 continue
 
-            loss_i, td_error_vec = loss_result
+            loss_i = loss_result["loss"]
+            kl_value = 0.0
+
+            if need_policy_logits and sft_ref_model is not None:
+                start_idx = int(loss_result["start_idx"].item())
+                policy_logits = loss_result["policy_logits"]
+                seq_len = policy_logits.size(0)
+
+                with torch.no_grad():
+                    ref_logits, _ = forward_logits_and_actions(
+                        sft_ref_model, traj_info["traj_ids"], device)
+
+                ref_segment = ref_logits[start_idx:start_idx + seq_len, :]
+
+                kl_loss = F.kl_div(
+                    F.log_softmax(policy_logits, dim=-1),
+                    F.softmax(ref_segment, dim=-1),
+                    reduction="batchmean",
+                )
+                loss_i = loss_i + kl_coef_current * kl_loss
+                kl_value = float(kl_loss.detach().item())
+
             q_losses.append(loss_i)
-            td_errors.append(float(td_error_vec.abs().mean().item()))
+            kl_losses.append(kl_value)
+            td_errors.append(float(loss_result["td_error"].abs().mean().item()))
             episode_rewards.append(traj_info["episode_reward"])
             step_rewards.append(traj_info["step_reward_mean"])
             path_lengths.append(len(traj_info["path_nodes"]))
+            valid_transition_list.append(traj_info["valid_transition_steps"])
+            invalid_transition_steps_list.append(traj_info["invalid_transition_steps"])
 
             success = bool(traj_info["success"])
             success_count += int(success)
             hit_target_count += int(traj_info["hit_target"])
             invalid_transition_count += int(traj_info["invalid_transition"])
             invalid_token_count += int(traj_info["invalid_token"])
+            stage2_visit_count += int(traj_info.get("visited_stage2", False))
 
             bucket = traj_info["bucket"]
             if bucket:
@@ -805,38 +997,55 @@ def main() -> None:
         avg_episode_reward = float(np.mean(episode_rewards)) if episode_rewards else 0.0
         avg_step_reward = float(np.mean(step_rewards)) if step_rewards else 0.0
         avg_path_len = float(np.mean(path_lengths)) if path_lengths else 0.0
+        avg_valid_transitions = float(np.mean(valid_transition_list)) if valid_transition_list else 0.0
+        avg_invalid_transition_steps = float(np.mean(invalid_transition_steps_list)) if invalid_transition_steps_list else 0.0
         success_rate = success_count / len(batch_pairs)
         hit_rate = hit_target_count / len(batch_pairs)
         invalid_transition_rate = invalid_transition_count / len(batch_pairs)
         invalid_token_rate = invalid_token_count / len(batch_pairs)
+        stage2_visit_rate = stage2_visit_count / len(batch_pairs)
         mean_td_error = float(np.mean(td_errors)) if td_errors else 0.0
+        mean_kl_loss = float(np.mean(kl_losses)) if kl_losses else 0.0
 
         if iteration % 50 == 0:
             logger.info(
-                "Iter %6d | loss=%.4f | td_err=%.4f | success=%.3f | hit=%.3f | "
-                "invalid_edge=%.3f | invalid_tok=%.3f | avg_ep_reward=%.3f | avg_path=%.2f",
+                "Iter %6d | loss=%.4f | td_err=%.4f | kl=%.4f | temp=%.3f | eps=%.3f | "
+                "success=%.3f | hit=%.3f | stage2=%.3f | invalid_edge=%.3f | invalid_tok=%.3f | "
+                "avg_ep_reward=%.3f | avg_path=%.2f | valid_steps=%.2f",
                 iteration,
                 float(total_loss.item()),
                 mean_td_error,
+                mean_kl_loss,
+                temperature,
+                epsilon,
                 success_rate,
                 hit_rate,
+                stage2_visit_rate,
                 invalid_transition_rate,
                 invalid_token_rate,
                 avg_episode_reward,
                 avg_path_len,
+                avg_valid_transitions,
             )
 
         record = {
             "iter": iteration,
             "loss": float(total_loss.item()),
             "td_error": mean_td_error,
+            "kl_loss": mean_kl_loss,
+            "temperature": temperature,
+            "epsilon": epsilon,
+            "kl_coef_current": kl_coef_current,
             "success_rate": success_rate,
             "hit_rate": hit_rate,
+            "stage2_visit_rate": stage2_visit_rate,
             "invalid_transition_rate": invalid_transition_rate,
             "invalid_token_rate": invalid_token_rate,
             "avg_episode_reward": avg_episode_reward,
             "avg_step_reward": avg_step_reward,
             "avg_path_len": avg_path_len,
+            "avg_valid_transitions": avg_valid_transitions,
+            "avg_invalid_transition_steps": avg_invalid_transition_steps,
         }
         for bucket in bucket_names:
             cnt = bucket_counts.get(bucket, 0)
