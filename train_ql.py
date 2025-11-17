@@ -9,38 +9,7 @@ Q-Learning fine-tuning script for GraphA Tier-3 datasets.
   3. 支持“多次犯错后才终止”，让轨迹不再一次无效就崩。
   4. 可选 KL 正则，把策略约束在 SFT 周围，稳定性大幅提高。
   5. 强制避免 block_size 扩容导致位置编码随机初始化。
-
-推荐用法示例：
-    python train_qlearning.py \
-        --data_dir data/datasets/graphA_pg020_tier3 \
-        --sft_checkpoint out/composition_20251022_124024/ckpt_5000.pt \
-        --train_paths_per_pair 20 \
-        --device cuda:0 \
-        --max_iters 20000 \
-        --eval_interval 1000 \
-        --save_interval 2000 \
-        --batch_size 32 \
-        --max_rollout_steps 32 \
-        --rollout_temp_start 0.0 \
-        --rollout_temp_end 1.0 \
-        --temp_warmup_iters 8000 \
-        --epsilon_start 0.2 \
-        --epsilon_end 0.05 \
-        --epsilon_warmup_iters 12000 \
-        --reward_type process \
-        --reward_hit_target 1.5 \
-        --reward_valid_transition 0.1 \
-        --reward_stage_bridge 0.2 \
-        --reward_stage_bridge_only_once \
-        --reward_invalid_transition 0.25 \
-        --reward_invalid_token 1.0 \
-        --reward_stop -0.1 \
-        --allow_invalid_continue \
-        --max_invalid_transitions 2 \
-        --target_ema 0.995 \
-        --kl_coef 0.05 \
-        --kl_warmup_iters 0 \
-        --kl_anneal_iters 12000
+  6. **修复 success 判定逻辑**：训练路径与评估完全对齐（模型必须显式生成 source）。
 """
 
 from __future__ import annotations
@@ -674,10 +643,10 @@ def sample_trajectory(model: GPT,
 
     traj_ids = build_traj_ids(prompt_ids, sampled_ids, stop_token_id, block_size)
     decoded_tokens = decode_tokens(sampled_ids, itos, stop_token_id)
-    path_nodes = tokens_to_nodes(decoded_tokens)
-    if not path_nodes or path_nodes[0] != source:
-        path_nodes = [source] + path_nodes
-    success = is_valid_path(path_nodes, source, target, stages, graph)
+    decoded_nodes = tokens_to_nodes(decoded_tokens)
+
+    starts_with_source = len(decoded_nodes) > 0 and decoded_nodes[0] == source
+    success = starts_with_source and is_valid_path(decoded_nodes, source, target, stages, graph)
 
     if args.reward_type == "outcome":
         adjusted_rewards = [0.0 for _ in rewards]
@@ -699,9 +668,10 @@ def sample_trajectory(model: GPT,
         "actions": sampled_ids,
         "rewards": rewards,
         "dones": dones,
-        "path_nodes": path_nodes,
         "decoded_tokens": decoded_tokens,
+        "path_nodes": decoded_nodes,
         "success": success,
+        "starts_with_source": starts_with_source,
         "episode_reward": episode_reward,
         "step_reward_mean": step_reward_mean,
         "hit_target": hit_target and success,
@@ -879,6 +849,7 @@ def main() -> None:
         path_lengths: List[int] = []
         valid_transition_list: List[int] = []
         invalid_transition_steps_list: List[int] = []
+        starts_with_source_list: List[float] = []
 
         bucket_success_sum = defaultdict(float)
         bucket_counts = defaultdict(int)
@@ -962,6 +933,7 @@ def main() -> None:
             path_lengths.append(len(traj_info["path_nodes"]))
             valid_transition_list.append(traj_info["valid_transition_steps"])
             invalid_transition_steps_list.append(traj_info["invalid_transition_steps"])
+            starts_with_source_list.append(1.0 if traj_info["starts_with_source"] else 0.0)
 
             success = bool(traj_info["success"])
             success_count += int(success)
@@ -999,6 +971,7 @@ def main() -> None:
         avg_path_len = float(np.mean(path_lengths)) if path_lengths else 0.0
         avg_valid_transitions = float(np.mean(valid_transition_list)) if valid_transition_list else 0.0
         avg_invalid_transition_steps = float(np.mean(invalid_transition_steps_list)) if invalid_transition_steps_list else 0.0
+        starts_with_source_rate = float(np.mean(starts_with_source_list)) if starts_with_source_list else 0.0
         success_rate = success_count / len(batch_pairs)
         hit_rate = hit_target_count / len(batch_pairs)
         invalid_transition_rate = invalid_transition_count / len(batch_pairs)
@@ -1010,8 +983,8 @@ def main() -> None:
         if iteration % 50 == 0:
             logger.info(
                 "Iter %6d | loss=%.4f | td_err=%.4f | kl=%.4f | temp=%.3f | eps=%.3f | "
-                "success=%.3f | hit=%.3f | stage2=%.3f | invalid_edge=%.3f | invalid_tok=%.3f | "
-                "avg_ep_reward=%.3f | avg_path=%.2f | valid_steps=%.2f",
+                "success=%.3f | hit=%.3f | stage2=%.3f | startsrc=%.3f | "
+                "invalid_edge=%.3f | invalid_tok=%.3f | avg_ep_reward=%.3f | avg_path=%.2f | valid_steps=%.2f",
                 iteration,
                 float(total_loss.item()),
                 mean_td_error,
@@ -1021,6 +994,7 @@ def main() -> None:
                 success_rate,
                 hit_rate,
                 stage2_visit_rate,
+                starts_with_source_rate,
                 invalid_transition_rate,
                 invalid_token_rate,
                 avg_episode_reward,
@@ -1039,6 +1013,7 @@ def main() -> None:
             "success_rate": success_rate,
             "hit_rate": hit_rate,
             "stage2_visit_rate": stage2_visit_rate,
+            "starts_with_source_rate": starts_with_source_rate,
             "invalid_transition_rate": invalid_transition_rate,
             "invalid_token_rate": invalid_token_rate,
             "avg_episode_reward": avg_episode_reward,
