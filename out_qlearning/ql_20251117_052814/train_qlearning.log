@@ -1,0 +1,520 @@
+[2025-11-17 05:28:14,906][INFO] Q-learning training started.
+[2025-11-17 05:28:14,906][INFO] Output directory: out_qlearning/ql_20251117_052814
+[2025-11-17 05:28:14,906][INFO] Reward type: process
+[2025-11-17 05:28:14,908][WARNING] 使用 block_size=64（override/checkpoint），数据 meta 为 32。
+[2025-11-17 05:28:14,908][INFO] Resolved model configuration: {"vocab_size": 92, "block_size": 64, "n_layer": 1, "n_head": 1, "n_embd": 92, "dropout": 0.0, "bias": false}
+[2025-11-17 05:28:15,588][WARNING] 扩容 block_size：checkpoint=32 -> 当前模型=64。新位置的嵌入使用随机初始化。
+[2025-11-17 05:28:15,591][WARNING] 扩容 block_size：checkpoint=32 -> 当前模型=64。新位置的嵌入使用随机初始化。
+[2025-11-17 05:28:15,591][INFO] 启用目标网络：EMA=0.9900, sync_interval=0
+[2025-11-17 05:28:15,602][INFO] Loaded 1127 unique (source, target) pairs for Q-learning training.
+[2025-11-17 05:28:31,612][INFO] Iter     50 | loss=24.1212 | td_err=3.8730 | success=0.000 | hit=0.000 | invalid_edge=0.375 | invalid_tok=0.000 | avg_ep_reward=0.469 | avg_path=3.66
+[2025-11-17 05:28:47,003][INFO] Iter    100 | loss=11.9710 | td_err=2.7586 | success=0.000 | hit=0.000 | invalid_edge=0.656 | invalid_tok=0.000 | avg_ep_reward=0.047 | avg_path=3.69
+[2025-11-17 05:29:02,492][INFO] Iter    150 | loss=10.5618 | td_err=2.5041 | success=0.000 | hit=0.000 | invalid_edge=0.781 | invalid_tok=0.000 | avg_ep_reward=-0.172 | avg_path=3.91
+[2025-11-17 05:29:18,736][INFO] Iter    200 | loss=7.1253 | td_err=2.0644 | success=0.000 | hit=0.000 | invalid_edge=0.812 | invalid_tok=0.000 | avg_ep_reward=-0.281 | avg_path=3.69
+[2025-11-17 05:29:35,724][INFO] Iter    250 | loss=4.7329 | td_err=1.7511 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.359 | avg_path=4.06
+[2025-11-17 05:29:52,980][INFO] Iter    300 | loss=4.1667 | td_err=1.5935 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=4.78
+[2025-11-17 05:30:10,838][INFO] Iter    350 | loss=4.6870 | td_err=1.6475 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.422 | avg_path=4.44
+[2025-11-17 05:30:27,456][INFO] Iter    400 | loss=2.8006 | td_err=1.2593 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.359 | avg_path=4.94
+[2025-11-17 05:30:42,934][INFO] Iter    450 | loss=2.1747 | td_err=1.1253 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=4.38
+[2025-11-17 05:30:58,491][INFO] Iter    500 | loss=1.8089 | td_err=1.0110 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=4.84
+[2025-11-17 05:31:13,894][INFO] Iter    550 | loss=1.8476 | td_err=0.9479 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=5.22
+[2025-11-17 05:31:29,496][INFO] Iter    600 | loss=2.0060 | td_err=0.9868 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=4.38
+[2025-11-17 05:31:45,061][INFO] Iter    650 | loss=1.4747 | td_err=0.8310 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=5.47
+[2025-11-17 05:32:00,504][INFO] Iter    700 | loss=2.1012 | td_err=0.8826 | success=0.000 | hit=0.000 | invalid_edge=0.844 | invalid_tok=0.031 | avg_ep_reward=-0.328 | avg_path=4.69
+[2025-11-17 05:32:15,813][INFO] Iter    750 | loss=1.4463 | td_err=0.7408 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.375 | avg_path=4.59
+[2025-11-17 05:32:31,210][INFO] Iter    800 | loss=1.5285 | td_err=0.7883 | success=0.000 | hit=0.000 | invalid_edge=0.844 | invalid_tok=0.000 | avg_ep_reward=-0.359 | avg_path=4.47
+[2025-11-17 05:32:47,065][INFO] Iter    850 | loss=1.2287 | td_err=0.7016 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.062 | avg_ep_reward=-0.469 | avg_path=4.28
+[2025-11-17 05:33:04,711][INFO] Iter    900 | loss=0.9386 | td_err=0.6044 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.031 | avg_ep_reward=-0.375 | avg_path=4.91
+[2025-11-17 05:33:22,285][INFO] Iter    950 | loss=0.9069 | td_err=0.5904 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=5.16
+[2025-11-17 05:33:38,408][INFO] Iter   1000 | loss=0.4985 | td_err=0.4978 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=4.25
+[2025-11-17 05:33:46,371][INFO] ---- Evaluation at iter 1000 ----
+[2025-11-17 05:33:46,371][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 05:33:46,371][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 05:33:46,371][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 05:33:46,371][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 05:34:01,894][INFO] Iter   1050 | loss=0.7602 | td_err=0.5064 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=3.88
+[2025-11-17 05:34:17,213][INFO] Iter   1100 | loss=0.7116 | td_err=0.5012 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=4.19
+[2025-11-17 05:34:32,901][INFO] Iter   1150 | loss=0.3625 | td_err=0.4264 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=4.94
+[2025-11-17 05:34:48,375][INFO] Iter   1200 | loss=0.6019 | td_err=0.5274 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=4.38
+[2025-11-17 05:35:05,648][INFO] Iter   1250 | loss=0.4015 | td_err=0.4354 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.031 | avg_ep_reward=-0.438 | avg_path=3.66
+[2025-11-17 05:35:22,223][INFO] Iter   1300 | loss=0.2993 | td_err=0.3839 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=3.72
+[2025-11-17 05:35:37,374][INFO] Iter   1350 | loss=0.5596 | td_err=0.3947 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=3.25
+[2025-11-17 05:35:52,906][INFO] Iter   1400 | loss=0.3702 | td_err=0.3769 | success=0.000 | hit=0.000 | invalid_edge=0.844 | invalid_tok=0.000 | avg_ep_reward=-0.297 | avg_path=3.56
+[2025-11-17 05:36:08,440][INFO] Iter   1450 | loss=0.3894 | td_err=0.3846 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=2.84
+[2025-11-17 05:36:23,790][INFO] Iter   1500 | loss=0.6393 | td_err=0.3843 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.422 | avg_path=2.41
+[2025-11-17 05:36:39,207][INFO] Iter   1550 | loss=0.2670 | td_err=0.3202 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.391 | avg_path=3.25
+[2025-11-17 05:36:54,510][INFO] Iter   1600 | loss=0.1222 | td_err=0.2466 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=2.44
+[2025-11-17 05:37:10,057][INFO] Iter   1650 | loss=0.1134 | td_err=0.2516 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=3.50
+[2025-11-17 05:37:25,315][INFO] Iter   1700 | loss=0.1779 | td_err=0.2878 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.375 | avg_path=2.25
+[2025-11-17 05:37:40,940][INFO] Iter   1750 | loss=0.1337 | td_err=0.2382 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.453 | avg_path=2.12
+[2025-11-17 05:37:57,407][INFO] Iter   1800 | loss=0.0921 | td_err=0.2124 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=2.59
+[2025-11-17 05:38:13,987][INFO] Iter   1850 | loss=0.2770 | td_err=0.2634 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=2.12
+[2025-11-17 05:38:29,302][INFO] Iter   1900 | loss=0.1587 | td_err=0.2459 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=2.78
+[2025-11-17 05:38:44,774][INFO] Iter   1950 | loss=0.1086 | td_err=0.2045 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=2.03
+[2025-11-17 05:39:00,382][INFO] Iter   2000 | loss=0.0989 | td_err=0.1974 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.53
+[2025-11-17 05:39:08,357][INFO] ---- Evaluation at iter 2000 ----
+[2025-11-17 05:39:08,358][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 05:39:08,358][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 05:39:08,358][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 05:39:08,358][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 05:39:08,363][INFO] Saved Q-learning checkpoint to out_qlearning/ql_20251117_052814/ckpt_ql_2000.pt
+[2025-11-17 05:39:23,422][INFO] Iter   2050 | loss=0.0841 | td_err=0.1875 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.62
+[2025-11-17 05:39:38,602][INFO] Iter   2100 | loss=0.0759 | td_err=0.1833 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.94
+[2025-11-17 05:39:54,019][INFO] Iter   2150 | loss=0.1079 | td_err=0.1936 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.53
+[2025-11-17 05:40:09,419][INFO] Iter   2200 | loss=0.0733 | td_err=0.1686 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.84
+[2025-11-17 05:40:24,722][INFO] Iter   2250 | loss=0.0703 | td_err=0.1753 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=1.44
+[2025-11-17 05:40:40,438][INFO] Iter   2300 | loss=0.0751 | td_err=0.1612 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.72
+[2025-11-17 05:40:55,819][INFO] Iter   2350 | loss=0.0784 | td_err=0.1584 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.62
+[2025-11-17 05:41:11,148][INFO] Iter   2400 | loss=0.1047 | td_err=0.1844 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 05:41:26,919][INFO] Iter   2450 | loss=0.0514 | td_err=0.1350 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.25
+[2025-11-17 05:41:44,110][INFO] Iter   2500 | loss=0.0400 | td_err=0.1274 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.19
+[2025-11-17 05:41:59,310][INFO] Iter   2550 | loss=0.0573 | td_err=0.1470 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.56
+[2025-11-17 05:42:14,330][INFO] Iter   2600 | loss=0.0816 | td_err=0.1351 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.422 | avg_path=1.41
+[2025-11-17 05:42:29,510][INFO] Iter   2650 | loss=0.0327 | td_err=0.1208 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 05:42:44,677][INFO] Iter   2700 | loss=0.0190 | td_err=0.0945 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 05:42:59,998][INFO] Iter   2750 | loss=0.0636 | td_err=0.1475 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.31
+[2025-11-17 05:43:15,360][INFO] Iter   2800 | loss=0.0399 | td_err=0.1245 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 05:43:30,849][INFO] Iter   2850 | loss=0.0369 | td_err=0.1086 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.09
+[2025-11-17 05:43:46,210][INFO] Iter   2900 | loss=0.0387 | td_err=0.1113 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.31
+[2025-11-17 05:44:01,603][INFO] Iter   2950 | loss=0.0341 | td_err=0.1118 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.09
+[2025-11-17 05:44:17,056][INFO] Iter   3000 | loss=0.0488 | td_err=0.1218 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.34
+[2025-11-17 05:44:24,955][INFO] ---- Evaluation at iter 3000 ----
+[2025-11-17 05:44:24,958][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 05:44:24,958][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 05:44:24,958][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 05:44:24,958][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 05:44:40,382][INFO] Iter   3050 | loss=0.0326 | td_err=0.1070 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.19
+[2025-11-17 05:44:56,057][INFO] Iter   3100 | loss=0.0321 | td_err=0.1038 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.28
+[2025-11-17 05:45:11,465][INFO] Iter   3150 | loss=0.0426 | td_err=0.1120 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.34
+[2025-11-17 05:45:27,796][INFO] Iter   3200 | loss=0.0267 | td_err=0.0852 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.453 | avg_path=1.09
+[2025-11-17 05:45:45,109][INFO] Iter   3250 | loss=0.0349 | td_err=0.1029 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.22
+[2025-11-17 05:46:02,657][INFO] Iter   3300 | loss=0.0184 | td_err=0.0812 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.03
+[2025-11-17 05:46:17,959][INFO] Iter   3350 | loss=0.0141 | td_err=0.0818 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 05:46:34,861][INFO] Iter   3400 | loss=0.0211 | td_err=0.0953 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.16
+[2025-11-17 05:46:52,753][INFO] Iter   3450 | loss=0.0707 | td_err=0.1339 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.359 | avg_path=1.22
+[2025-11-17 05:47:08,768][INFO] Iter   3500 | loss=0.0252 | td_err=0.0965 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 05:47:24,054][INFO] Iter   3550 | loss=0.0243 | td_err=0.0977 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.12
+[2025-11-17 05:47:39,446][INFO] Iter   3600 | loss=0.0165 | td_err=0.0833 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 05:47:55,424][INFO] Iter   3650 | loss=0.0117 | td_err=0.0705 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.34
+[2025-11-17 05:48:11,580][INFO] Iter   3700 | loss=0.0365 | td_err=0.0963 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.25
+[2025-11-17 05:48:28,516][INFO] Iter   3750 | loss=0.0207 | td_err=0.0868 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.453 | avg_path=1.38
+[2025-11-17 05:48:45,286][INFO] Iter   3800 | loss=0.0353 | td_err=0.0977 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.09
+[2025-11-17 05:49:00,538][INFO] Iter   3850 | loss=0.0221 | td_err=0.0912 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.22
+[2025-11-17 05:49:15,807][INFO] Iter   3900 | loss=0.0253 | td_err=0.0888 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.47
+[2025-11-17 05:49:30,972][INFO] Iter   3950 | loss=0.0106 | td_err=0.0615 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 05:49:46,390][INFO] Iter   4000 | loss=0.0222 | td_err=0.0799 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.25
+[2025-11-17 05:49:54,416][INFO] ---- Evaluation at iter 4000 ----
+[2025-11-17 05:49:54,417][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 05:49:54,417][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 05:49:54,417][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 05:49:54,417][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 05:49:54,421][INFO] Saved Q-learning checkpoint to out_qlearning/ql_20251117_052814/ckpt_ql_4000.pt
+[2025-11-17 05:50:09,975][INFO] Iter   4050 | loss=0.0203 | td_err=0.0747 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.22
+[2025-11-17 05:50:26,242][INFO] Iter   4100 | loss=0.0142 | td_err=0.0668 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.22
+[2025-11-17 05:50:41,741][INFO] Iter   4150 | loss=0.0232 | td_err=0.0766 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.25
+[2025-11-17 05:50:57,371][INFO] Iter   4200 | loss=0.0071 | td_err=0.0533 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.03
+[2025-11-17 05:51:12,973][INFO] Iter   4250 | loss=0.0249 | td_err=0.0860 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.25
+[2025-11-17 05:51:30,473][INFO] Iter   4300 | loss=0.0305 | td_err=0.0864 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.31
+[2025-11-17 05:51:46,129][INFO] Iter   4350 | loss=0.0083 | td_err=0.0615 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.22
+[2025-11-17 05:52:01,220][INFO] Iter   4400 | loss=0.0078 | td_err=0.0532 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.38
+[2025-11-17 05:52:16,495][INFO] Iter   4450 | loss=0.0093 | td_err=0.0595 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.09
+[2025-11-17 05:52:31,639][INFO] Iter   4500 | loss=0.0184 | td_err=0.0780 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.19
+[2025-11-17 05:52:47,036][INFO] Iter   4550 | loss=0.0230 | td_err=0.0720 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.19
+[2025-11-17 05:53:03,066][INFO] Iter   4600 | loss=0.0227 | td_err=0.0797 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.38
+[2025-11-17 05:53:18,457][INFO] Iter   4650 | loss=0.0102 | td_err=0.0651 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 05:53:33,909][INFO] Iter   4700 | loss=0.0143 | td_err=0.0743 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.41
+[2025-11-17 05:53:49,235][INFO] Iter   4750 | loss=0.0206 | td_err=0.0741 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.19
+[2025-11-17 05:54:04,619][INFO] Iter   4800 | loss=0.0088 | td_err=0.0628 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 05:54:19,965][INFO] Iter   4850 | loss=0.0094 | td_err=0.0636 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.16
+[2025-11-17 05:54:35,692][INFO] Iter   4900 | loss=0.0105 | td_err=0.0662 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.22
+[2025-11-17 05:54:51,032][INFO] Iter   4950 | loss=0.0112 | td_err=0.0683 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.34
+[2025-11-17 05:55:06,590][INFO] Iter   5000 | loss=0.0067 | td_err=0.0486 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.31
+[2025-11-17 05:55:14,787][INFO] ---- Evaluation at iter 5000 ----
+[2025-11-17 05:55:14,788][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 05:55:14,788][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 05:55:14,788][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 05:55:14,788][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 05:55:30,148][INFO] Iter   5050 | loss=0.0169 | td_err=0.0757 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.41
+[2025-11-17 05:55:45,364][INFO] Iter   5100 | loss=0.0098 | td_err=0.0631 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.28
+[2025-11-17 05:56:00,927][INFO] Iter   5150 | loss=0.0093 | td_err=0.0646 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 05:56:16,338][INFO] Iter   5200 | loss=0.0128 | td_err=0.0600 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.22
+[2025-11-17 05:56:31,736][INFO] Iter   5250 | loss=0.0088 | td_err=0.0611 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.12
+[2025-11-17 05:56:47,158][INFO] Iter   5300 | loss=0.0076 | td_err=0.0563 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.19
+[2025-11-17 05:57:02,478][INFO] Iter   5350 | loss=0.0136 | td_err=0.0542 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.16
+[2025-11-17 05:57:18,134][INFO] Iter   5400 | loss=0.0079 | td_err=0.0532 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.062 | avg_ep_reward=-0.531 | avg_path=1.16
+[2025-11-17 05:57:34,359][INFO] Iter   5450 | loss=0.0226 | td_err=0.0722 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=1.31
+[2025-11-17 05:57:49,714][INFO] Iter   5500 | loss=0.0079 | td_err=0.0573 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.062 | avg_ep_reward=-0.531 | avg_path=1.28
+[2025-11-17 05:58:05,154][INFO] Iter   5550 | loss=0.0139 | td_err=0.0570 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=1.22
+[2025-11-17 05:58:20,445][INFO] Iter   5600 | loss=0.0096 | td_err=0.0557 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 05:58:36,078][INFO] Iter   5650 | loss=0.0058 | td_err=0.0461 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.16
+[2025-11-17 05:58:51,610][INFO] Iter   5700 | loss=0.0071 | td_err=0.0524 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.09
+[2025-11-17 05:59:06,767][INFO] Iter   5750 | loss=0.0067 | td_err=0.0505 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.09
+[2025-11-17 05:59:21,955][INFO] Iter   5800 | loss=0.0063 | td_err=0.0507 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.28
+[2025-11-17 05:59:37,243][INFO] Iter   5850 | loss=0.0263 | td_err=0.0735 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.19
+[2025-11-17 05:59:53,680][INFO] Iter   5900 | loss=0.0586 | td_err=0.1011 | success=0.000 | hit=0.000 | invalid_edge=0.844 | invalid_tok=0.000 | avg_ep_reward=-0.328 | avg_path=1.22
+[2025-11-17 06:00:08,736][INFO] Iter   5950 | loss=0.0089 | td_err=0.0616 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 06:00:24,032][INFO] Iter   6000 | loss=0.0208 | td_err=0.0726 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.25
+[2025-11-17 06:00:32,092][INFO] ---- Evaluation at iter 6000 ----
+[2025-11-17 06:00:32,093][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:00:32,093][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:00:32,093][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:00:32,093][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:00:32,096][INFO] Saved Q-learning checkpoint to out_qlearning/ql_20251117_052814/ckpt_ql_6000.pt
+[2025-11-17 06:00:47,482][INFO] Iter   6050 | loss=0.0094 | td_err=0.0684 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 06:01:02,975][INFO] Iter   6100 | loss=0.0059 | td_err=0.0477 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.22
+[2025-11-17 06:01:18,396][INFO] Iter   6150 | loss=0.0065 | td_err=0.0516 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 06:01:33,678][INFO] Iter   6200 | loss=0.0083 | td_err=0.0580 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.19
+[2025-11-17 06:01:49,038][INFO] Iter   6250 | loss=0.0213 | td_err=0.0540 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.22
+[2025-11-17 06:02:04,490][INFO] Iter   6300 | loss=0.0262 | td_err=0.0783 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.31
+[2025-11-17 06:02:19,649][INFO] Iter   6350 | loss=0.0055 | td_err=0.0472 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.25
+[2025-11-17 06:02:35,224][INFO] Iter   6400 | loss=0.0233 | td_err=0.0636 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.453 | avg_path=1.25
+[2025-11-17 06:02:50,621][INFO] Iter   6450 | loss=0.0088 | td_err=0.0572 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.22
+[2025-11-17 06:03:06,050][INFO] Iter   6500 | loss=0.0067 | td_err=0.0551 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.16
+[2025-11-17 06:03:21,308][INFO] Iter   6550 | loss=0.0250 | td_err=0.0684 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.12
+[2025-11-17 06:03:36,786][INFO] Iter   6600 | loss=0.0277 | td_err=0.0808 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.438 | avg_path=1.25
+[2025-11-17 06:03:52,288][INFO] Iter   6650 | loss=0.0101 | td_err=0.0594 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.34
+[2025-11-17 06:04:07,608][INFO] Iter   6700 | loss=0.0214 | td_err=0.0570 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.09
+[2025-11-17 06:04:22,803][INFO] Iter   6750 | loss=0.0089 | td_err=0.0585 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.16
+[2025-11-17 06:04:38,412][INFO] Iter   6800 | loss=0.0041 | td_err=0.0388 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.19
+[2025-11-17 06:04:53,669][INFO] Iter   6850 | loss=0.0061 | td_err=0.0454 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.09
+[2025-11-17 06:05:08,894][INFO] Iter   6900 | loss=0.0094 | td_err=0.0589 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.453 | avg_path=1.22
+[2025-11-17 06:05:24,287][INFO] Iter   6950 | loss=0.0212 | td_err=0.0626 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.31
+[2025-11-17 06:05:39,728][INFO] Iter   7000 | loss=0.0063 | td_err=0.0493 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.09
+[2025-11-17 06:05:47,665][INFO] ---- Evaluation at iter 7000 ----
+[2025-11-17 06:05:47,665][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:05:47,665][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:05:47,665][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:05:47,665][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:06:05,146][INFO] Iter   7050 | loss=0.0303 | td_err=0.0700 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.28
+[2025-11-17 06:06:21,185][INFO] Iter   7100 | loss=0.0070 | td_err=0.0544 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.19
+[2025-11-17 06:06:36,391][INFO] Iter   7150 | loss=0.0187 | td_err=0.0673 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 06:06:51,769][INFO] Iter   7200 | loss=0.0259 | td_err=0.0678 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.25
+[2025-11-17 06:07:07,063][INFO] Iter   7250 | loss=0.0053 | td_err=0.0461 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.062 | avg_ep_reward=-0.531 | avg_path=1.38
+[2025-11-17 06:07:22,417][INFO] Iter   7300 | loss=0.0068 | td_err=0.0502 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 06:07:38,059][INFO] Iter   7350 | loss=0.0074 | td_err=0.0565 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.22
+[2025-11-17 06:07:54,567][INFO] Iter   7400 | loss=0.0094 | td_err=0.0598 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.16
+[2025-11-17 06:08:09,879][INFO] Iter   7450 | loss=0.0073 | td_err=0.0534 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.19
+[2025-11-17 06:08:25,174][INFO] Iter   7500 | loss=0.0081 | td_err=0.0536 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.22
+[2025-11-17 06:08:40,632][INFO] Iter   7550 | loss=0.0066 | td_err=0.0496 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.22
+[2025-11-17 06:08:56,194][INFO] Iter   7600 | loss=0.0085 | td_err=0.0588 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 06:09:11,637][INFO] Iter   7650 | loss=0.0157 | td_err=0.0642 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.28
+[2025-11-17 06:09:27,166][INFO] Iter   7700 | loss=0.0051 | td_err=0.0439 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.22
+[2025-11-17 06:09:42,599][INFO] Iter   7750 | loss=0.0053 | td_err=0.0439 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.09
+[2025-11-17 06:09:57,850][INFO] Iter   7800 | loss=0.0088 | td_err=0.0575 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.22
+[2025-11-17 06:10:13,229][INFO] Iter   7850 | loss=0.0079 | td_err=0.0543 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.38
+[2025-11-17 06:10:28,614][INFO] Iter   7900 | loss=0.0032 | td_err=0.0349 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.06
+[2025-11-17 06:10:44,060][INFO] Iter   7950 | loss=0.0216 | td_err=0.0699 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.19
+[2025-11-17 06:10:59,426][INFO] Iter   8000 | loss=0.0080 | td_err=0.0548 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.22
+[2025-11-17 06:11:07,543][INFO] ---- Evaluation at iter 8000 ----
+[2025-11-17 06:11:07,544][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:11:07,544][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:11:07,544][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:11:07,544][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:11:07,547][INFO] Saved Q-learning checkpoint to out_qlearning/ql_20251117_052814/ckpt_ql_8000.pt
+[2025-11-17 06:11:22,888][INFO] Iter   8050 | loss=0.0192 | td_err=0.0452 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.16
+[2025-11-17 06:11:38,289][INFO] Iter   8100 | loss=0.0092 | td_err=0.0625 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 06:11:53,844][INFO] Iter   8150 | loss=0.0061 | td_err=0.0443 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.19
+[2025-11-17 06:12:09,247][INFO] Iter   8200 | loss=0.0246 | td_err=0.0663 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.28
+[2025-11-17 06:12:24,668][INFO] Iter   8250 | loss=0.0050 | td_err=0.0461 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.12
+[2025-11-17 06:12:40,153][INFO] Iter   8300 | loss=0.0137 | td_err=0.0535 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 06:12:55,444][INFO] Iter   8350 | loss=0.0130 | td_err=0.0524 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.06
+[2025-11-17 06:13:10,917][INFO] Iter   8400 | loss=0.0156 | td_err=0.0657 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=1.12
+[2025-11-17 06:13:26,142][INFO] Iter   8450 | loss=0.0067 | td_err=0.0469 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.09
+[2025-11-17 06:13:41,949][INFO] Iter   8500 | loss=0.0210 | td_err=0.0622 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.19
+[2025-11-17 06:13:57,675][INFO] Iter   8550 | loss=0.0065 | td_err=0.0502 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 06:14:12,890][INFO] Iter   8600 | loss=0.0045 | td_err=0.0466 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.16
+[2025-11-17 06:14:28,187][INFO] Iter   8650 | loss=0.0093 | td_err=0.0601 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 06:14:43,642][INFO] Iter   8700 | loss=0.0077 | td_err=0.0560 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.09
+[2025-11-17 06:14:59,102][INFO] Iter   8750 | loss=0.0084 | td_err=0.0563 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.09
+[2025-11-17 06:15:14,421][INFO] Iter   8800 | loss=0.0185 | td_err=0.0718 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.25
+[2025-11-17 06:15:30,051][INFO] Iter   8850 | loss=0.0065 | td_err=0.0474 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.50
+[2025-11-17 06:15:45,459][INFO] Iter   8900 | loss=0.0071 | td_err=0.0525 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.22
+[2025-11-17 06:16:00,860][INFO] Iter   8950 | loss=0.0061 | td_err=0.0447 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.12
+[2025-11-17 06:16:16,279][INFO] Iter   9000 | loss=0.0103 | td_err=0.0622 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.19
+[2025-11-17 06:16:24,523][INFO] ---- Evaluation at iter 9000 ----
+[2025-11-17 06:16:24,523][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:16:24,523][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:16:24,523][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:16:24,523][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:16:40,305][INFO] Iter   9050 | loss=0.0085 | td_err=0.0536 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.22
+[2025-11-17 06:16:55,789][INFO] Iter   9100 | loss=0.0064 | td_err=0.0512 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.16
+[2025-11-17 06:17:11,017][INFO] Iter   9150 | loss=0.0044 | td_err=0.0425 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.09
+[2025-11-17 06:17:26,492][INFO] Iter   9200 | loss=0.0049 | td_err=0.0435 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.16
+[2025-11-17 06:17:41,863][INFO] Iter   9250 | loss=0.0062 | td_err=0.0478 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.06
+[2025-11-17 06:17:57,116][INFO] Iter   9300 | loss=0.0044 | td_err=0.0421 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.38
+[2025-11-17 06:18:12,351][INFO] Iter   9350 | loss=0.0071 | td_err=0.0492 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.19
+[2025-11-17 06:18:27,603][INFO] Iter   9400 | loss=0.0258 | td_err=0.0705 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.44
+[2025-11-17 06:18:43,079][INFO] Iter   9450 | loss=0.0078 | td_err=0.0499 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.06
+[2025-11-17 06:18:58,450][INFO] Iter   9500 | loss=0.0229 | td_err=0.0658 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=0.97
+[2025-11-17 06:19:13,638][INFO] Iter   9550 | loss=0.0201 | td_err=0.0614 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.16
+[2025-11-17 06:19:28,948][INFO] Iter   9600 | loss=0.0085 | td_err=0.0518 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 06:19:44,471][INFO] Iter   9650 | loss=0.0129 | td_err=0.0399 | success=0.000 | hit=0.000 | invalid_edge=0.812 | invalid_tok=0.031 | avg_ep_reward=-0.406 | avg_path=0.97
+[2025-11-17 06:19:59,777][INFO] Iter   9700 | loss=0.0190 | td_err=0.0636 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=1.28
+[2025-11-17 06:20:15,313][INFO] Iter   9750 | loss=0.0067 | td_err=0.0508 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.31
+[2025-11-17 06:20:30,626][INFO] Iter   9800 | loss=0.0115 | td_err=0.0466 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.12
+[2025-11-17 06:20:46,267][INFO] Iter   9850 | loss=0.0061 | td_err=0.0494 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.16
+[2025-11-17 06:21:01,691][INFO] Iter   9900 | loss=0.0094 | td_err=0.0615 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 06:21:17,364][INFO] Iter   9950 | loss=0.0068 | td_err=0.0531 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.22
+[2025-11-17 06:21:32,691][INFO] Iter  10000 | loss=0.0143 | td_err=0.0614 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.22
+[2025-11-17 06:21:40,549][INFO] ---- Evaluation at iter 10000 ----
+[2025-11-17 06:21:40,550][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:21:40,550][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:21:40,550][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:21:40,550][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:21:40,554][INFO] Saved Q-learning checkpoint to out_qlearning/ql_20251117_052814/ckpt_ql_10000.pt
+[2025-11-17 06:21:56,481][INFO] Iter  10050 | loss=0.0083 | td_err=0.0560 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.19
+[2025-11-17 06:22:11,606][INFO] Iter  10100 | loss=0.0082 | td_err=0.0582 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.31
+[2025-11-17 06:22:26,656][INFO] Iter  10150 | loss=0.0054 | td_err=0.0466 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 06:22:42,105][INFO] Iter  10200 | loss=0.0082 | td_err=0.0545 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.16
+[2025-11-17 06:22:57,357][INFO] Iter  10250 | loss=0.0075 | td_err=0.0535 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 06:23:12,628][INFO] Iter  10300 | loss=0.0067 | td_err=0.0515 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.12
+[2025-11-17 06:23:28,366][INFO] Iter  10350 | loss=0.0058 | td_err=0.0493 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.34
+[2025-11-17 06:23:43,926][INFO] Iter  10400 | loss=0.0130 | td_err=0.0597 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.453 | avg_path=1.25
+[2025-11-17 06:23:59,184][INFO] Iter  10450 | loss=0.0149 | td_err=0.0613 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.28
+[2025-11-17 06:24:14,523][INFO] Iter  10500 | loss=0.0105 | td_err=0.0578 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.06
+[2025-11-17 06:24:30,032][INFO] Iter  10550 | loss=0.0083 | td_err=0.0595 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.19
+[2025-11-17 06:24:45,381][INFO] Iter  10600 | loss=0.0053 | td_err=0.0430 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.16
+[2025-11-17 06:25:00,540][INFO] Iter  10650 | loss=0.0200 | td_err=0.0709 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 06:25:17,651][INFO] Iter  10700 | loss=0.0140 | td_err=0.0635 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=1.16
+[2025-11-17 06:25:34,111][INFO] Iter  10750 | loss=0.0068 | td_err=0.0494 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.28
+[2025-11-17 06:25:49,441][INFO] Iter  10800 | loss=0.0114 | td_err=0.0612 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.19
+[2025-11-17 06:26:04,977][INFO] Iter  10850 | loss=0.0120 | td_err=0.0539 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 06:26:20,384][INFO] Iter  10900 | loss=0.0203 | td_err=0.0669 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.391 | avg_path=1.22
+[2025-11-17 06:26:35,872][INFO] Iter  10950 | loss=0.0180 | td_err=0.0749 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=1.34
+[2025-11-17 06:26:51,138][INFO] Iter  11000 | loss=0.0092 | td_err=0.0632 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 06:26:59,107][INFO] ---- Evaluation at iter 11000 ----
+[2025-11-17 06:26:59,107][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:26:59,107][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:26:59,107][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:26:59,107][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:27:14,256][INFO] Iter  11050 | loss=0.0154 | td_err=0.0659 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.38
+[2025-11-17 06:27:29,679][INFO] Iter  11100 | loss=0.0104 | td_err=0.0567 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.25
+[2025-11-17 06:27:45,627][INFO] Iter  11150 | loss=0.0090 | td_err=0.0619 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.34
+[2025-11-17 06:28:01,761][INFO] Iter  11200 | loss=0.0051 | td_err=0.0454 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.12
+[2025-11-17 06:28:17,726][INFO] Iter  11250 | loss=0.0150 | td_err=0.0676 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.438 | avg_path=1.31
+[2025-11-17 06:28:33,939][INFO] Iter  11300 | loss=0.0102 | td_err=0.0560 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 06:28:50,883][INFO] Iter  11350 | loss=0.0153 | td_err=0.0641 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.22
+[2025-11-17 06:29:08,121][INFO] Iter  11400 | loss=0.0089 | td_err=0.0579 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.38
+[2025-11-17 06:29:24,664][INFO] Iter  11450 | loss=0.0172 | td_err=0.0641 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.34
+[2025-11-17 06:29:40,084][INFO] Iter  11500 | loss=0.0124 | td_err=0.0662 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.31
+[2025-11-17 06:29:55,625][INFO] Iter  11550 | loss=0.0137 | td_err=0.0654 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.391 | avg_path=1.12
+[2025-11-17 06:30:10,957][INFO] Iter  11600 | loss=0.0061 | td_err=0.0522 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.16
+[2025-11-17 06:30:26,715][INFO] Iter  11650 | loss=0.0147 | td_err=0.0595 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=1.22
+[2025-11-17 06:30:42,049][INFO] Iter  11700 | loss=0.0071 | td_err=0.0484 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.062 | avg_ep_reward=-0.531 | avg_path=1.12
+[2025-11-17 06:30:57,478][INFO] Iter  11750 | loss=0.0217 | td_err=0.0667 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.22
+[2025-11-17 06:31:12,806][INFO] Iter  11800 | loss=0.0106 | td_err=0.0602 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.12
+[2025-11-17 06:31:28,207][INFO] Iter  11850 | loss=0.0077 | td_err=0.0576 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.09
+[2025-11-17 06:31:43,555][INFO] Iter  11900 | loss=0.0132 | td_err=0.0657 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.31
+[2025-11-17 06:31:59,285][INFO] Iter  11950 | loss=0.0054 | td_err=0.0426 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.31
+[2025-11-17 06:32:15,936][INFO] Iter  12000 | loss=0.0086 | td_err=0.0559 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 06:32:25,188][INFO] ---- Evaluation at iter 12000 ----
+[2025-11-17 06:32:25,189][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:32:25,189][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:32:25,189][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:32:25,189][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:32:25,193][INFO] Saved Q-learning checkpoint to out_qlearning/ql_20251117_052814/ckpt_ql_12000.pt
+[2025-11-17 06:32:40,889][INFO] Iter  12050 | loss=0.0121 | td_err=0.0623 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.422 | avg_path=1.16
+[2025-11-17 06:32:58,125][INFO] Iter  12100 | loss=0.0096 | td_err=0.0588 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 06:33:14,819][INFO] Iter  12150 | loss=0.0060 | td_err=0.0489 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.44
+[2025-11-17 06:33:30,054][INFO] Iter  12200 | loss=0.0142 | td_err=0.0565 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.34
+[2025-11-17 06:33:45,340][INFO] Iter  12250 | loss=0.0103 | td_err=0.0467 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.19
+[2025-11-17 06:34:00,862][INFO] Iter  12300 | loss=0.0104 | td_err=0.0609 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.09
+[2025-11-17 06:34:16,263][INFO] Iter  12350 | loss=0.0305 | td_err=0.0943 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.000 | avg_ep_reward=-0.344 | avg_path=1.19
+[2025-11-17 06:34:32,057][INFO] Iter  12400 | loss=0.0052 | td_err=0.0470 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.09
+[2025-11-17 06:34:47,591][INFO] Iter  12450 | loss=0.0086 | td_err=0.0550 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.19
+[2025-11-17 06:35:02,440][INFO] Iter  12500 | loss=0.0195 | td_err=0.0832 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.28
+[2025-11-17 06:35:17,275][INFO] Iter  12550 | loss=0.0170 | td_err=0.0680 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.16
+[2025-11-17 06:35:32,110][INFO] Iter  12600 | loss=0.0132 | td_err=0.0642 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.062 | avg_ep_reward=-0.484 | avg_path=1.19
+[2025-11-17 06:35:46,926][INFO] Iter  12650 | loss=0.0072 | td_err=0.0552 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 06:36:01,735][INFO] Iter  12700 | loss=0.0090 | td_err=0.0553 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.06
+[2025-11-17 06:36:16,571][INFO] Iter  12750 | loss=0.0068 | td_err=0.0509 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 06:36:31,481][INFO] Iter  12800 | loss=0.0053 | td_err=0.0445 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.38
+[2025-11-17 06:36:46,392][INFO] Iter  12850 | loss=0.0158 | td_err=0.0653 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.25
+[2025-11-17 06:37:01,061][INFO] Iter  12900 | loss=0.0090 | td_err=0.0556 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.16
+[2025-11-17 06:37:15,836][INFO] Iter  12950 | loss=0.0064 | td_err=0.0529 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 06:37:30,609][INFO] Iter  13000 | loss=0.0098 | td_err=0.0564 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.16
+[2025-11-17 06:37:38,302][INFO] ---- Evaluation at iter 13000 ----
+[2025-11-17 06:37:38,303][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:37:38,303][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:37:38,303][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:37:38,303][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:37:53,056][INFO] Iter  13050 | loss=0.0126 | td_err=0.0624 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.31
+[2025-11-17 06:38:07,802][INFO] Iter  13100 | loss=0.0086 | td_err=0.0485 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=1.34
+[2025-11-17 06:38:22,562][INFO] Iter  13150 | loss=0.0088 | td_err=0.0542 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.09
+[2025-11-17 06:38:37,387][INFO] Iter  13200 | loss=0.0061 | td_err=0.0502 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.25
+[2025-11-17 06:38:52,229][INFO] Iter  13250 | loss=0.0280 | td_err=0.0761 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.406 | avg_path=1.16
+[2025-11-17 06:39:07,011][INFO] Iter  13300 | loss=0.0075 | td_err=0.0557 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.16
+[2025-11-17 06:39:21,787][INFO] Iter  13350 | loss=0.0067 | td_err=0.0504 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 06:39:36,559][INFO] Iter  13400 | loss=0.0078 | td_err=0.0567 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 06:39:51,396][INFO] Iter  13450 | loss=0.0102 | td_err=0.0608 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.34
+[2025-11-17 06:40:06,189][INFO] Iter  13500 | loss=0.0052 | td_err=0.0436 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.38
+[2025-11-17 06:40:20,974][INFO] Iter  13550 | loss=0.0073 | td_err=0.0511 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.22
+[2025-11-17 06:40:35,785][INFO] Iter  13600 | loss=0.0080 | td_err=0.0548 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.16
+[2025-11-17 06:40:50,682][INFO] Iter  13650 | loss=0.0119 | td_err=0.0604 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.34
+[2025-11-17 06:41:05,475][INFO] Iter  13700 | loss=0.0077 | td_err=0.0554 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.19
+[2025-11-17 06:41:20,267][INFO] Iter  13750 | loss=0.0065 | td_err=0.0487 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.09
+[2025-11-17 06:41:35,051][INFO] Iter  13800 | loss=0.0076 | td_err=0.0545 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 06:41:49,835][INFO] Iter  13850 | loss=0.0120 | td_err=0.0568 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.09
+[2025-11-17 06:42:04,610][INFO] Iter  13900 | loss=0.0108 | td_err=0.0600 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.31
+[2025-11-17 06:42:19,363][INFO] Iter  13950 | loss=0.0095 | td_err=0.0600 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.25
+[2025-11-17 06:42:34,128][INFO] Iter  14000 | loss=0.0127 | td_err=0.0649 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.16
+[2025-11-17 06:42:41,871][INFO] ---- Evaluation at iter 14000 ----
+[2025-11-17 06:42:41,872][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:42:41,872][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:42:41,872][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:42:41,872][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:42:41,878][INFO] Saved Q-learning checkpoint to out_qlearning/ql_20251117_052814/ckpt_ql_14000.pt
+[2025-11-17 06:42:56,703][INFO] Iter  14050 | loss=0.0191 | td_err=0.0670 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.25
+[2025-11-17 06:43:11,474][INFO] Iter  14100 | loss=0.0061 | td_err=0.0503 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 06:43:26,201][INFO] Iter  14150 | loss=0.0100 | td_err=0.0529 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.06
+[2025-11-17 06:43:40,951][INFO] Iter  14200 | loss=0.0078 | td_err=0.0540 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.062 | avg_ep_reward=-0.516 | avg_path=1.09
+[2025-11-17 06:43:55,696][INFO] Iter  14250 | loss=0.0062 | td_err=0.0491 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.47
+[2025-11-17 06:44:10,446][INFO] Iter  14300 | loss=0.0148 | td_err=0.0607 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.09
+[2025-11-17 06:44:25,211][INFO] Iter  14350 | loss=0.0101 | td_err=0.0622 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.16
+[2025-11-17 06:44:40,002][INFO] Iter  14400 | loss=0.0157 | td_err=0.0658 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.19
+[2025-11-17 06:44:54,882][INFO] Iter  14450 | loss=0.0131 | td_err=0.0661 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.28
+[2025-11-17 06:45:09,667][INFO] Iter  14500 | loss=0.0249 | td_err=0.0764 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.22
+[2025-11-17 06:45:24,455][INFO] Iter  14550 | loss=0.0208 | td_err=0.0826 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.000 | avg_ep_reward=-0.281 | avg_path=1.47
+[2025-11-17 06:45:39,250][INFO] Iter  14600 | loss=0.0072 | td_err=0.0525 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 06:45:54,024][INFO] Iter  14650 | loss=0.0148 | td_err=0.0741 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.28
+[2025-11-17 06:46:08,822][INFO] Iter  14700 | loss=0.0172 | td_err=0.0754 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.453 | avg_path=1.25
+[2025-11-17 06:46:23,639][INFO] Iter  14750 | loss=0.0100 | td_err=0.0567 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=0.97
+[2025-11-17 06:46:38,404][INFO] Iter  14800 | loss=0.0067 | td_err=0.0542 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.06
+[2025-11-17 06:46:53,300][INFO] Iter  14850 | loss=0.0076 | td_err=0.0553 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.19
+[2025-11-17 06:47:08,099][INFO] Iter  14900 | loss=0.0113 | td_err=0.0478 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=0.97
+[2025-11-17 06:47:22,843][INFO] Iter  14950 | loss=0.0207 | td_err=0.0773 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.44
+[2025-11-17 06:47:37,598][INFO] Iter  15000 | loss=0.0091 | td_err=0.0590 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 06:47:45,343][INFO] ---- Evaluation at iter 15000 ----
+[2025-11-17 06:47:45,343][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:47:45,343][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:47:45,343][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:47:45,343][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:48:00,101][INFO] Iter  15050 | loss=0.0154 | td_err=0.0637 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.28
+[2025-11-17 06:48:14,845][INFO] Iter  15100 | loss=0.0082 | td_err=0.0548 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.031 | avg_ep_reward=-0.438 | avg_path=1.03
+[2025-11-17 06:48:29,576][INFO] Iter  15150 | loss=0.0113 | td_err=0.0709 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.38
+[2025-11-17 06:48:44,288][INFO] Iter  15200 | loss=0.0082 | td_err=0.0590 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.16
+[2025-11-17 06:48:59,106][INFO] Iter  15250 | loss=0.0109 | td_err=0.0691 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.31
+[2025-11-17 06:49:13,876][INFO] Iter  15300 | loss=0.0116 | td_err=0.0633 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.09
+[2025-11-17 06:49:28,657][INFO] Iter  15350 | loss=0.0058 | td_err=0.0510 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.19
+[2025-11-17 06:49:43,494][INFO] Iter  15400 | loss=0.0080 | td_err=0.0584 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=1.44
+[2025-11-17 06:49:58,263][INFO] Iter  15450 | loss=0.0097 | td_err=0.0630 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=1.28
+[2025-11-17 06:50:13,034][INFO] Iter  15500 | loss=0.0072 | td_err=0.0519 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.25
+[2025-11-17 06:50:27,796][INFO] Iter  15550 | loss=0.0059 | td_err=0.0474 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 06:50:42,559][INFO] Iter  15600 | loss=0.0100 | td_err=0.0640 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.25
+[2025-11-17 06:50:57,426][INFO] Iter  15650 | loss=0.0084 | td_err=0.0586 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.44
+[2025-11-17 06:51:12,234][INFO] Iter  15700 | loss=0.0106 | td_err=0.0571 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.28
+[2025-11-17 06:51:27,014][INFO] Iter  15750 | loss=0.0132 | td_err=0.0608 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.16
+[2025-11-17 06:51:41,793][INFO] Iter  15800 | loss=0.0157 | td_err=0.0658 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.438 | avg_path=1.25
+[2025-11-17 06:51:56,564][INFO] Iter  15850 | loss=0.0110 | td_err=0.0535 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.34
+[2025-11-17 06:52:11,333][INFO] Iter  15900 | loss=0.0094 | td_err=0.0587 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.453 | avg_path=1.06
+[2025-11-17 06:52:26,086][INFO] Iter  15950 | loss=0.0141 | td_err=0.0691 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 06:52:40,899][INFO] Iter  16000 | loss=0.0050 | td_err=0.0488 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.22
+[2025-11-17 06:52:48,647][INFO] ---- Evaluation at iter 16000 ----
+[2025-11-17 06:52:48,647][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:52:48,647][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:52:48,647][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:52:48,647][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:52:48,655][INFO] Saved Q-learning checkpoint to out_qlearning/ql_20251117_052814/ckpt_ql_16000.pt
+[2025-11-17 06:53:03,624][INFO] Iter  16050 | loss=0.0134 | td_err=0.0609 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.25
+[2025-11-17 06:53:18,447][INFO] Iter  16100 | loss=0.0095 | td_err=0.0574 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.16
+[2025-11-17 06:53:33,280][INFO] Iter  16150 | loss=0.0063 | td_err=0.0526 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 06:53:48,115][INFO] Iter  16200 | loss=0.0132 | td_err=0.0645 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.31
+[2025-11-17 06:54:02,946][INFO] Iter  16250 | loss=0.0210 | td_err=0.0751 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=1.19
+[2025-11-17 06:54:17,774][INFO] Iter  16300 | loss=0.0149 | td_err=0.0665 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.28
+[2025-11-17 06:54:32,589][INFO] Iter  16350 | loss=0.0152 | td_err=0.0721 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 06:54:47,402][INFO] Iter  16400 | loss=0.0075 | td_err=0.0572 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.22
+[2025-11-17 06:55:02,311][INFO] Iter  16450 | loss=0.0088 | td_err=0.0618 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.16
+[2025-11-17 06:55:17,185][INFO] Iter  16500 | loss=0.0160 | td_err=0.0748 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.12
+[2025-11-17 06:55:32,005][INFO] Iter  16550 | loss=0.0154 | td_err=0.0695 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.19
+[2025-11-17 06:55:46,820][INFO] Iter  16600 | loss=0.0181 | td_err=0.0747 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.422 | avg_path=1.25
+[2025-11-17 06:56:01,673][INFO] Iter  16650 | loss=0.0136 | td_err=0.0699 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=1.31
+[2025-11-17 06:56:16,459][INFO] Iter  16700 | loss=0.0099 | td_err=0.0619 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.25
+[2025-11-17 06:56:31,247][INFO] Iter  16750 | loss=0.0097 | td_err=0.0600 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.34
+[2025-11-17 06:56:46,018][INFO] Iter  16800 | loss=0.0125 | td_err=0.0671 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=1.19
+[2025-11-17 06:57:00,847][INFO] Iter  16850 | loss=0.0076 | td_err=0.0573 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=1.41
+[2025-11-17 06:57:15,703][INFO] Iter  16900 | loss=0.0103 | td_err=0.0642 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.22
+[2025-11-17 06:57:30,479][INFO] Iter  16950 | loss=0.0084 | td_err=0.0535 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 06:57:45,273][INFO] Iter  17000 | loss=0.0093 | td_err=0.0576 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.28
+[2025-11-17 06:57:53,062][INFO] ---- Evaluation at iter 17000 ----
+[2025-11-17 06:57:53,062][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 06:57:53,062][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 06:57:53,062][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 06:57:53,062][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 06:58:07,860][INFO] Iter  17050 | loss=0.0191 | td_err=0.0811 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=1.31
+[2025-11-17 06:58:22,664][INFO] Iter  17100 | loss=0.0136 | td_err=0.0703 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.12
+[2025-11-17 06:58:37,468][INFO] Iter  17150 | loss=0.0126 | td_err=0.0633 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.16
+[2025-11-17 06:58:52,257][INFO] Iter  17200 | loss=0.0095 | td_err=0.0595 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=1.16
+[2025-11-17 06:59:07,162][INFO] Iter  17250 | loss=0.0104 | td_err=0.0671 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.31
+[2025-11-17 06:59:22,031][INFO] Iter  17300 | loss=0.0106 | td_err=0.0678 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.25
+[2025-11-17 06:59:36,830][INFO] Iter  17350 | loss=0.0083 | td_err=0.0594 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.28
+[2025-11-17 06:59:51,620][INFO] Iter  17400 | loss=0.0058 | td_err=0.0459 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.09
+[2025-11-17 07:00:06,402][INFO] Iter  17450 | loss=0.0074 | td_err=0.0529 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.000 | avg_ep_reward=-0.406 | avg_path=1.19
+[2025-11-17 07:00:21,192][INFO] Iter  17500 | loss=0.0053 | td_err=0.0503 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.22
+[2025-11-17 07:00:35,976][INFO] Iter  17550 | loss=0.0086 | td_err=0.0582 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.22
+[2025-11-17 07:00:50,632][INFO] Iter  17600 | loss=0.0100 | td_err=0.0610 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.16
+[2025-11-17 07:01:05,337][INFO] Iter  17650 | loss=0.0202 | td_err=0.0768 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.375 | avg_path=1.25
+[2025-11-17 07:01:20,046][INFO] Iter  17700 | loss=0.0094 | td_err=0.0537 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.16
+[2025-11-17 07:01:34,698][INFO] Iter  17750 | loss=0.0071 | td_err=0.0490 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.12
+[2025-11-17 07:01:49,350][INFO] Iter  17800 | loss=0.0073 | td_err=0.0548 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.22
+[2025-11-17 07:02:03,997][INFO] Iter  17850 | loss=0.0071 | td_err=0.0494 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.34
+[2025-11-17 07:02:18,650][INFO] Iter  17900 | loss=0.0128 | td_err=0.0657 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.25
+[2025-11-17 07:02:33,344][INFO] Iter  17950 | loss=0.0126 | td_err=0.0611 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.25
+[2025-11-17 07:02:48,009][INFO] Iter  18000 | loss=0.0077 | td_err=0.0554 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.28
+[2025-11-17 07:02:55,708][INFO] ---- Evaluation at iter 18000 ----
+[2025-11-17 07:02:55,708][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 07:02:55,708][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 07:02:55,708][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 07:02:55,708][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 07:02:55,714][INFO] Saved Q-learning checkpoint to out_qlearning/ql_20251117_052814/ckpt_ql_18000.pt
+[2025-11-17 07:03:10,492][INFO] Iter  18050 | loss=0.0072 | td_err=0.0565 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.44
+[2025-11-17 07:03:25,200][INFO] Iter  18100 | loss=0.0085 | td_err=0.0531 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.34
+[2025-11-17 07:03:39,862][INFO] Iter  18150 | loss=0.0122 | td_err=0.0585 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.391 | avg_path=1.22
+[2025-11-17 07:03:54,523][INFO] Iter  18200 | loss=0.0118 | td_err=0.0654 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.28
+[2025-11-17 07:04:09,185][INFO] Iter  18250 | loss=0.0105 | td_err=0.0609 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.359 | avg_path=1.34
+[2025-11-17 07:04:23,918][INFO] Iter  18300 | loss=0.0105 | td_err=0.0627 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.469 | avg_path=1.25
+[2025-11-17 07:04:38,700][INFO] Iter  18350 | loss=0.0082 | td_err=0.0544 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.41
+[2025-11-17 07:04:53,483][INFO] Iter  18400 | loss=0.0175 | td_err=0.0725 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.19
+[2025-11-17 07:05:08,334][INFO] Iter  18450 | loss=0.0149 | td_err=0.0745 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.44
+[2025-11-17 07:05:23,229][INFO] Iter  18500 | loss=0.0073 | td_err=0.0510 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.25
+[2025-11-17 07:05:38,034][INFO] Iter  18550 | loss=0.0117 | td_err=0.0634 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.25
+[2025-11-17 07:05:52,881][INFO] Iter  18600 | loss=0.0065 | td_err=0.0451 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.12
+[2025-11-17 07:06:07,523][INFO] Iter  18650 | loss=0.0088 | td_err=0.0566 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.19
+[2025-11-17 07:06:22,159][INFO] Iter  18700 | loss=0.0061 | td_err=0.0475 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.34
+[2025-11-17 07:06:36,800][INFO] Iter  18750 | loss=0.0126 | td_err=0.0617 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.38
+[2025-11-17 07:06:51,420][INFO] Iter  18800 | loss=0.0080 | td_err=0.0576 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.031 | avg_ep_reward=-0.500 | avg_path=1.25
+[2025-11-17 07:07:06,074][INFO] Iter  18850 | loss=0.0096 | td_err=0.0535 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.453 | avg_path=1.19
+[2025-11-17 07:07:20,860][INFO] Iter  18900 | loss=0.0092 | td_err=0.0585 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 07:07:35,497][INFO] Iter  18950 | loss=0.0131 | td_err=0.0609 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.25
+[2025-11-17 07:07:50,138][INFO] Iter  19000 | loss=0.0049 | td_err=0.0428 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.500 | avg_path=1.34
+[2025-11-17 07:07:57,768][INFO] ---- Evaluation at iter 19000 ----
+[2025-11-17 07:07:57,768][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 07:07:57,768][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 07:07:57,768][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 07:07:57,768][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 07:08:12,444][INFO] Iter  19050 | loss=0.0076 | td_err=0.0512 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.09
+[2025-11-17 07:08:27,219][INFO] Iter  19100 | loss=0.0056 | td_err=0.0442 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.19
+[2025-11-17 07:08:41,968][INFO] Iter  19150 | loss=0.0067 | td_err=0.0507 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.12
+[2025-11-17 07:08:56,690][INFO] Iter  19200 | loss=0.0031 | td_err=0.0360 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.09
+[2025-11-17 07:09:11,440][INFO] Iter  19250 | loss=0.0124 | td_err=0.0649 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.31
+[2025-11-17 07:09:26,358][INFO] Iter  19300 | loss=0.0090 | td_err=0.0598 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.28
+[2025-11-17 07:09:41,108][INFO] Iter  19350 | loss=0.0111 | td_err=0.0577 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.19
+[2025-11-17 07:09:55,852][INFO] Iter  19400 | loss=0.0065 | td_err=0.0473 | success=0.000 | hit=0.000 | invalid_edge=1.000 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.22
+[2025-11-17 07:10:10,602][INFO] Iter  19450 | loss=0.0061 | td_err=0.0477 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.422 | avg_path=1.09
+[2025-11-17 07:10:25,357][INFO] Iter  19500 | loss=0.0085 | td_err=0.0526 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.09
+[2025-11-17 07:10:40,099][INFO] Iter  19550 | loss=0.0088 | td_err=0.0572 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.31
+[2025-11-17 07:10:54,836][INFO] Iter  19600 | loss=0.0135 | td_err=0.0505 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.484 | avg_path=1.28
+[2025-11-17 07:11:09,576][INFO] Iter  19650 | loss=0.0121 | td_err=0.0606 | success=0.000 | hit=0.000 | invalid_edge=0.906 | invalid_tok=0.031 | avg_ep_reward=-0.453 | avg_path=1.47
+[2025-11-17 07:11:24,452][INFO] Iter  19700 | loss=0.0082 | td_err=0.0576 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.484 | avg_path=1.28
+[2025-11-17 07:11:39,202][INFO] Iter  19750 | loss=0.0100 | td_err=0.0627 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.031 | avg_ep_reward=-0.516 | avg_path=1.25
+[2025-11-17 07:11:53,956][INFO] Iter  19800 | loss=0.0064 | td_err=0.0501 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.469 | avg_path=1.09
+[2025-11-17 07:12:08,746][INFO] Iter  19850 | loss=0.0077 | td_err=0.0527 | success=0.000 | hit=0.000 | invalid_edge=0.875 | invalid_tok=0.062 | avg_ep_reward=-0.438 | avg_path=1.16
+[2025-11-17 07:12:23,482][INFO] Iter  19900 | loss=0.0106 | td_err=0.0592 | success=0.000 | hit=0.000 | invalid_edge=0.938 | invalid_tok=0.000 | avg_ep_reward=-0.438 | avg_path=1.31
+[2025-11-17 07:12:38,318][INFO] Iter  19950 | loss=0.0120 | td_err=0.0631 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.38
+[2025-11-17 07:12:53,076][INFO] Iter  20000 | loss=0.0059 | td_err=0.0431 | success=0.000 | hit=0.000 | invalid_edge=0.969 | invalid_tok=0.000 | avg_ep_reward=-0.453 | avg_path=1.03
+[2025-11-17 07:13:00,819][INFO] ---- Evaluation at iter 20000 ----
+[2025-11-17 07:13:00,820][INFO]   S1->S2: 0.00% (0 / 296)
+[2025-11-17 07:13:00,820][INFO]   S2->S3: 0.00% (0 / 301)
+[2025-11-17 07:13:00,820][INFO]   S1->S3: 0.00% (0 / 450)
+[2025-11-17 07:13:00,820][INFO]   overall: 0.00% (0 / 1047)
+[2025-11-17 07:13:00,825][INFO] Saved Q-learning checkpoint to out_qlearning/ql_20251117_052814/ckpt_ql_20000.pt
+[2025-11-17 07:13:00,825][INFO] Q-learning training finished.
