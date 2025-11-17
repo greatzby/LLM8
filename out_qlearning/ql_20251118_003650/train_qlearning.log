@@ -1,0 +1,8 @@
+[2025-11-18 00:36:50,824][INFO] Q-learning training started.
+[2025-11-18 00:36:50,824][INFO] Output directory: out_qlearning/ql_20251118_003650
+[2025-11-18 00:36:50,824][INFO] Reward type: process
+[2025-11-18 00:36:50,826][INFO] Resolved model configuration: {"vocab_size": 92, "block_size": 32, "n_layer": 1, "n_head": 1, "n_embd": 92, "dropout": 0.0, "bias": false}
+[2025-11-18 00:36:51,590][INFO] 启用目标网络：EMA=0.9950, sync_interval=0
+[2025-11-18 00:36:51,592][INFO] KL 正则启用：coef=0.0500, warmup=0, anneal=12000
+[2025-11-18 00:36:51,603][INFO] Loaded 1127 unique (source, target) pairs for Q-learning training.
+[2025-11-18 00:36:59,066][INFO] Iter     50 | loss=27.9265 | td_err=4.0748 | kl=2.1423 | temp=0.005 | eps=0.149 | success=1.000 | hit=1.000 | stage2=0.812 | first_src=0.000 | first_valid=1.000 | invalid_edge=0.000 | invalid_tok=0.000 | avg_ep_reward=1.934 | avg_path=4.94 | valid_steps=3.94
