@@ -9,7 +9,7 @@ Q-Learning fine-tuning script for GraphA Tier-3 datasets.
   3. 支持“多次犯错后才终止”，让轨迹不再一次无效就崩。
   4. 可选 KL 正则，把策略约束在 SFT 周围，稳定性大幅提高。
   5. 强制避免 block_size 扩容导致位置编码随机初始化。
-  6. **修复 success 判定逻辑**：训练路径与评估完全对齐（模型必须显式生成 source）。
+  6. success 判定与官方评测一致：验证时自动拼接 prompt 的 source。
 """
 
 from __future__ import annotations
@@ -193,6 +193,14 @@ def tokens_to_nodes(tokens: Sequence[str]) -> List[int]:
     return nodes
 
 
+def assemble_full_path(source: int,
+                       generated_nodes: Sequence[int]) -> List[int]:
+    """将 prompt 中的 source 拼接到模型生成的节点序列前，得到完整路径。"""
+    full_path = [source]
+    full_path.extend(generated_nodes)
+    return full_path
+
+
 def bucket_for_pair(source: int,
                     target: int,
                     stages: Sequence[Sequence[int]]) -> Optional[BucketName]:
@@ -366,9 +374,10 @@ def evaluate_model(model: GPT,
 
             new_tokens = generated[len(prompt_tokens):]
             decoded_tokens = decode_tokens(new_tokens, itos, stop_token_id)
-            path_nodes = tokens_to_nodes(decoded_tokens)
+            generated_nodes = tokens_to_nodes(decoded_tokens)
+            full_path = assemble_full_path(source, generated_nodes)
 
-            if is_valid_path(path_nodes, source, target, stages, graph):
+            if is_valid_path(full_path, source, target, stages, graph):
                 correct += 1
 
         total_correct += correct
@@ -643,10 +652,15 @@ def sample_trajectory(model: GPT,
 
     traj_ids = build_traj_ids(prompt_ids, sampled_ids, stop_token_id, block_size)
     decoded_tokens = decode_tokens(sampled_ids, itos, stop_token_id)
-    decoded_nodes = tokens_to_nodes(decoded_tokens)
+    generated_nodes = tokens_to_nodes(decoded_tokens)
+    full_path_nodes = assemble_full_path(source, generated_nodes)
 
-    starts_with_source = len(decoded_nodes) > 0 and decoded_nodes[0] == source
-    success = starts_with_source and is_valid_path(decoded_nodes, source, target, stages, graph)
+    first_step_node = generated_nodes[0] if generated_nodes else None
+    first_step_is_source = first_step_node == source
+    first_step_is_valid = bool(first_step_node is not None and
+                               graph.has_edge(str(source), str(first_step_node)))
+
+    success = is_valid_path(full_path_nodes, source, target, stages, graph)
 
     if args.reward_type == "outcome":
         adjusted_rewards = [0.0 for _ in rewards]
@@ -669,9 +683,11 @@ def sample_trajectory(model: GPT,
         "rewards": rewards,
         "dones": dones,
         "decoded_tokens": decoded_tokens,
-        "path_nodes": decoded_nodes,
+        "generated_nodes": generated_nodes,
+        "path_nodes": full_path_nodes,
         "success": success,
-        "starts_with_source": starts_with_source,
+        "first_step_is_source": first_step_is_source,
+        "first_step_is_valid": first_step_is_valid,
         "episode_reward": episode_reward,
         "step_reward_mean": step_reward_mean,
         "hit_target": hit_target and success,
@@ -849,7 +865,8 @@ def main() -> None:
         path_lengths: List[int] = []
         valid_transition_list: List[int] = []
         invalid_transition_steps_list: List[int] = []
-        starts_with_source_list: List[float] = []
+        first_step_source_list: List[float] = []
+        first_step_valid_list: List[float] = []
 
         bucket_success_sum = defaultdict(float)
         bucket_counts = defaultdict(int)
@@ -933,7 +950,8 @@ def main() -> None:
             path_lengths.append(len(traj_info["path_nodes"]))
             valid_transition_list.append(traj_info["valid_transition_steps"])
             invalid_transition_steps_list.append(traj_info["invalid_transition_steps"])
-            starts_with_source_list.append(1.0 if traj_info["starts_with_source"] else 0.0)
+            first_step_source_list.append(1.0 if traj_info["first_step_is_source"] else 0.0)
+            first_step_valid_list.append(1.0 if traj_info["first_step_is_valid"] else 0.0)
 
             success = bool(traj_info["success"])
             success_count += int(success)
@@ -971,7 +989,8 @@ def main() -> None:
         avg_path_len = float(np.mean(path_lengths)) if path_lengths else 0.0
         avg_valid_transitions = float(np.mean(valid_transition_list)) if valid_transition_list else 0.0
         avg_invalid_transition_steps = float(np.mean(invalid_transition_steps_list)) if invalid_transition_steps_list else 0.0
-        starts_with_source_rate = float(np.mean(starts_with_source_list)) if starts_with_source_list else 0.0
+        first_step_source_rate = float(np.mean(first_step_source_list)) if first_step_source_list else 0.0
+        first_step_valid_rate = float(np.mean(first_step_valid_list)) if first_step_valid_list else 0.0
         success_rate = success_count / len(batch_pairs)
         hit_rate = hit_target_count / len(batch_pairs)
         invalid_transition_rate = invalid_transition_count / len(batch_pairs)
@@ -983,7 +1002,7 @@ def main() -> None:
         if iteration % 50 == 0:
             logger.info(
                 "Iter %6d | loss=%.4f | td_err=%.4f | kl=%.4f | temp=%.3f | eps=%.3f | "
-                "success=%.3f | hit=%.3f | stage2=%.3f | startsrc=%.3f | "
+                "success=%.3f | hit=%.3f | stage2=%.3f | first_src=%.3f | first_valid=%.3f | "
                 "invalid_edge=%.3f | invalid_tok=%.3f | avg_ep_reward=%.3f | avg_path=%.2f | valid_steps=%.2f",
                 iteration,
                 float(total_loss.item()),
@@ -994,7 +1013,8 @@ def main() -> None:
                 success_rate,
                 hit_rate,
                 stage2_visit_rate,
-                starts_with_source_rate,
+                first_step_source_rate,
+                first_step_valid_rate,
                 invalid_transition_rate,
                 invalid_token_rate,
                 avg_episode_reward,
@@ -1013,7 +1033,8 @@ def main() -> None:
             "success_rate": success_rate,
             "hit_rate": hit_rate,
             "stage2_visit_rate": stage2_visit_rate,
-            "starts_with_source_rate": starts_with_source_rate,
+            "first_step_source_rate": first_step_source_rate,
+            "first_step_valid_rate": first_step_valid_rate,
             "invalid_transition_rate": invalid_transition_rate,
             "invalid_token_rate": invalid_token_rate,
             "avg_episode_reward": avg_episode_reward,
