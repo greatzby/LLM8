@@ -1,0 +1,3 @@
+[2025-11-17 17:05:04,659][INFO] Q-learning training started.
+[2025-11-17 17:05:04,659][INFO] Output directory: out_qlearning/ql_20251117_170504
+[2025-11-17 17:05:04,659][INFO] Reward type: process
