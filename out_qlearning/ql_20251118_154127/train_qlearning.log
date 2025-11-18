@@ -1,0 +1,4 @@
+[2025-11-18 15:41:27,154][INFO] Q-learning training started.
+[2025-11-18 15:41:27,154][INFO] Output directory: out_qlearning/ql_20251118_154127
+[2025-11-18 15:41:27,154][INFO] Reward type: process
+[2025-11-18 15:41:27,162][INFO] Resolved model configuration: {"vocab_size": 92, "block_size": 32, "n_layer": 1, "n_head": 1, "n_embd": 92, "dropout": 0.0, "bias": false}
