@@ -5,8 +5,11 @@ GraphA Mechanism Analysis Script
 对比 SFT, PG, Q-Learning 模型的内部机制。
 
 修复说明：
-1. 引入 pandas 将列表转换为 DataFrame 以兼容新版 seaborn。
-2. 优化了部分绘图逻辑。
+1. 处理模型维度不一致问题 (32 vs 64)：
+   - 权重分析：跳过形状不匹配的层。
+   - 隐藏层相似度：跳过维度不匹配的对比。
+2. 修复 Seaborn FutureWarning (添加 hue 参数)。
+3. 引入 pandas 兼容性。
 
 Usage:
     python analyze_mechanism.py \
@@ -24,7 +27,7 @@ import json
 import torch
 import torch.nn.functional as F
 import numpy as np
-import pandas as pd  # 新增：必须导入 pandas
+import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -34,7 +37,7 @@ from model import GPT, GPTConfig
 
 # 设置绘图风格
 sns.set_theme(style="whitegrid")
-plt.rcParams['font.sans-serif'] = ['DejaVu Sans']  # 防止中文乱码兼容性问题
+plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -60,7 +63,7 @@ def load_model(ckpt_path, device, meta_vocab_size):
     config = GPTConfig(**model_args)
     model = GPT(config)
     
-    # 处理 state_dict (去除编译前缀等)
+    # 处理 state_dict
     state_dict = checkpoint['model']
     unwanted_prefix = '_orig_mod.'
     for k,v in list(state_dict.items()):
@@ -78,14 +81,13 @@ def load_model(ckpt_path, device, meta_vocab_size):
     return model
 
 def get_s1_s3_samples(test_file, stages, graph, num_samples=500):
-    """从测试集中提取合法的 S1->S3 样本，并找到一个合法的中间点 S2 用于测试"""
+    """从测试集中提取合法的 S1->S3 样本"""
     S1, S2, S3 = stages[0], stages[1], stages[2]
     samples = []
     
     with open(test_file, 'r') as f:
         lines = f.readlines()
         
-    # 随机打乱以获得多样性
     import random
     random.seed(42)
     random.shuffle(lines)
@@ -96,16 +98,12 @@ def get_s1_s3_samples(test_file, stages, graph, num_samples=500):
         src, tgt = int(parts[0]), int(parts[1])
         
         if src in S1 and tgt in S3:
-            # 我们需要找到一个合法的 S1->S2->S3 路径的前缀
-            # 为了分析，我们手动构造一个正确的 S1->S2 步骤
-            # 查找所有连接 src 和 tgt 的 s2 节点
             valid_s2 = []
             for s2_node in S2:
                 if graph.has_edge(str(src), str(s2_node)) and graph.has_edge(str(s2_node), str(tgt)):
                     valid_s2.append(s2_node)
             
             if valid_s2:
-                # 选第一个合法的 S2 节点作为 context
                 s2_step = valid_s2[0]
                 samples.append({
                     'src': src,
@@ -119,14 +117,13 @@ def get_s1_s3_samples(test_file, stages, graph, num_samples=500):
     print(f"Collected {len(samples)} valid S1->S3 test samples.")
     return samples
 
-# --- Analysis 1: Logits & Probability (The "Stop" Problem) ---
+# --- Analysis 1: Logits & Probability ---
 def analyze_logits(models, samples, stoi, itos, device, output_dir):
     print("Running Logits Analysis...")
     results = defaultdict(list)
     stop_token_id = stoi['\n']
     
     for sample in samples:
-        # Context: [S1, S3, S1, S2_node]
         context = [
             stoi[str(sample['src'])],
             stoi[str(sample['tgt'])],
@@ -134,21 +131,17 @@ def analyze_logits(models, samples, stoi, itos, device, output_dir):
             stoi[str(sample['s2_step'])]
         ]
         x = torch.tensor(context, dtype=torch.long, device=device).unsqueeze(0)
-        
         target_s3_token = stoi[str(sample['tgt'])]
         
         for model_name, model in models.items():
             with torch.no_grad():
                 logits, _ = model(x)
             
-            # 取最后一个 token 的 logits
             last_logits = logits[0, -1, :]
             probs = F.softmax(last_logits, dim=-1)
             
             p_eos = probs[stop_token_id].item()
             p_target = probs[target_s3_token].item()
-            
-            # 计算熵 (Entropy) - 衡量不确定性
             entropy = -torch.sum(probs * torch.log(probs + 1e-9)).item()
             
             results[model_name].append({
@@ -157,7 +150,6 @@ def analyze_logits(models, samples, stoi, itos, device, output_dir):
                 'entropy': entropy
             })
             
-    # 绘图
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
     
     # Plot 1: P(EOS)
@@ -165,20 +157,18 @@ def analyze_logits(models, samples, stoi, itos, device, output_dir):
     for name, res in results.items():
         for r in res:
             data_eos.append({'Model': name, 'Probability': r['p_eos']})
-    # FIX: Convert to DataFrame
     df_eos = pd.DataFrame(data_eos)
-    sns.boxplot(data=df_eos, x='Model', y='Probability', ax=axes[0], palette="Set2")
+    # 修复 FutureWarning: 添加 hue='Model', legend=False
+    sns.boxplot(data=df_eos, x='Model', y='Probability', hue='Model', legend=False, ax=axes[0], palette="Set2")
     axes[0].set_title('Probability of Stop Token (<EOS>) at S2')
-    axes[0].set_ylabel('P(EOS)')
 
     # Plot 2: P(Target S3)
     data_tgt = []
     for name, res in results.items():
         for r in res:
             data_tgt.append({'Model': name, 'Probability': r['p_target']})
-    # FIX: Convert to DataFrame
     df_tgt = pd.DataFrame(data_tgt)
-    sns.boxplot(data=df_tgt, x='Model', y='Probability', ax=axes[1], palette="Set2")
+    sns.boxplot(data=df_tgt, x='Model', y='Probability', hue='Model', legend=False, ax=axes[1], palette="Set2")
     axes[1].set_title('Probability of Correct Target S3 at S2')
     
     # Plot 3: Entropy
@@ -186,9 +176,8 @@ def analyze_logits(models, samples, stoi, itos, device, output_dir):
     for name, res in results.items():
         for r in res:
             data_ent.append({'Model': name, 'Entropy': r['entropy']})
-    # FIX: Convert to DataFrame
     df_ent = pd.DataFrame(data_ent)
-    sns.boxplot(data=df_ent, x='Model', y='Entropy', ax=axes[2], palette="Set2")
+    sns.boxplot(data=df_ent, x='Model', y='Entropy', hue='Model', legend=False, ax=axes[2], palette="Set2")
     axes[2].set_title('Prediction Entropy at S2')
     
     plt.tight_layout()
@@ -202,7 +191,7 @@ def get_last_hidden_state(model, x):
     def hook_fn(module, input, output):
         hidden_states.append(output)
     
-    # Register hook on the last transformer block
+    # Hook last transformer block
     handle = model.transformer.h[-1].register_forward_hook(hook_fn)
     
     with torch.no_grad():
@@ -217,13 +206,11 @@ def analyze_hidden_states(models, samples, stoi, device, output_dir):
     X_data = defaultdict(list)
     y_labels = [] 
     
-    # 过滤 Top Targets 以便于可视化
+    # Filter for visualization
     from collections import Counter
     tgt_counts = Counter([s['tgt'] for s in samples])
     top_targets = set([t for t, c in tgt_counts.most_common(8)])
-    
     filtered_samples = [s for s in samples if s['tgt'] in top_targets]
-    print(f"Filtered to {len(filtered_samples)} samples covering top 8 targets for visualization.")
     
     for sample in filtered_samples:
         context = [
@@ -247,6 +234,7 @@ def analyze_hidden_states(models, samples, stoi, device, output_dir):
         vectors = np.array(vectors)
         if len(vectors) == 0: continue
         
+        # t-SNE works fine with different dimensions across models
         tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(vectors)-1), init='pca', learning_rate='auto')
         X_embedded = tsne.fit_transform(vectors)
         
@@ -258,24 +246,22 @@ def analyze_hidden_states(models, samples, stoi, device, output_dir):
             legend=False, 
             s=60, alpha=0.8
         )
-        axes[idx].set_title(f"{name} Hidden Space (Colored by Target S3)")
+        axes[idx].set_title(f"{name} Hidden Space (Dim={vectors.shape[1]})")
         axes[idx].grid(True, linestyle='--', alpha=0.3)
         
-    plt.suptitle("t-SNE of Hidden States at S2 Node (Do they cluster by Goal?)", fontsize=16)
+    plt.suptitle("t-SNE of Hidden States at S2 Node", fontsize=16)
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'hidden_state_tsne.png'))
     plt.close()
     
     # Cosine Similarity Analysis
-    print("Calculating Cosine Similarity between SFT and RL models...")
+    print("Calculating Cosine Similarity...")
     sim_pg = []
     sim_ql = []
     
-    # 使用原始 samples 对应的全量数据进行相似度计算，而不是 filtered
-    # 重新跑一遍全量数据的 hidden state 提取 (为了准确性)
     print("Extracting full hidden states for similarity metrics...")
     full_vecs = defaultdict(list)
-    for sample in samples: # 使用全量 samples
+    for sample in samples:
         context = [
             stoi[str(sample['src'])],
             stoi[str(sample['tgt'])],
@@ -295,20 +281,46 @@ def analyze_hidden_states(models, samples, stoi, device, output_dir):
         norm2 = np.linalg.norm(v2)
         return np.dot(v1, v2) / (norm1 * norm2 + 1e-9)
     
-    for i in range(len(vecs_sft)):
-        sim_pg.append(cosine_sim(vecs_sft[i], vecs_pg[i]))
-        sim_ql.append(cosine_sim(vecs_sft[i], vecs_ql[i]))
+    # Check dimensions before calculating
+    dim_sft = vecs_sft.shape[1]
+    dim_pg = vecs_pg.shape[1]
+    dim_ql = vecs_ql.shape[1]
+    
+    print(f"Dimensions -> SFT: {dim_sft}, PG: {dim_pg}, QL: {dim_ql}")
+
+    # SFT vs PG
+    if dim_sft == dim_pg:
+        for i in range(len(vecs_sft)):
+            sim_pg.append(cosine_sim(vecs_sft[i], vecs_pg[i]))
+    else:
+        print(f"Skipping SFT vs PG cosine similarity due to dimension mismatch ({dim_sft} vs {dim_pg})")
+
+    # SFT vs QL
+    if dim_sft == dim_ql:
+        for i in range(len(vecs_sft)):
+            sim_ql.append(cosine_sim(vecs_sft[i], vecs_ql[i]))
+    else:
+        print(f"Skipping SFT vs QL cosine similarity due to dimension mismatch ({dim_sft} vs {dim_ql})")
         
     plt.figure(figsize=(8, 5))
-    # FIX: Convert to DataFrame for KDE plot
-    df_sim = pd.DataFrame({
-        'Cosine Similarity': sim_pg + sim_ql,
-        'Comparison': ['SFT vs PG'] * len(sim_pg) + ['SFT vs QL'] * len(sim_ql)
-    })
-    sns.kdeplot(data=df_sim, x='Cosine Similarity', hue='Comparison', fill=True)
+    plot_data = {'Cosine Similarity': [], 'Comparison': []}
     
-    plt.title("Distribution of Cosine Similarity (Representation Drift)")
-    plt.savefig(os.path.join(output_dir, 'representation_drift.png'))
+    if sim_pg:
+        plot_data['Cosine Similarity'].extend(sim_pg)
+        plot_data['Comparison'].extend(['SFT vs PG'] * len(sim_pg))
+    
+    if sim_ql:
+        plot_data['Cosine Similarity'].extend(sim_ql)
+        plot_data['Comparison'].extend(['SFT vs QL'] * len(sim_ql))
+        
+    if plot_data['Cosine Similarity']:
+        df_sim = pd.DataFrame(plot_data)
+        sns.kdeplot(data=df_sim, x='Cosine Similarity', hue='Comparison', fill=True)
+        plt.title("Distribution of Cosine Similarity (Representation Drift)")
+        plt.savefig(os.path.join(output_dir, 'representation_drift.png'))
+    else:
+        print("No valid similarity comparisons to plot.")
+        
     plt.close()
     print("Hidden state analysis saved.")
 
@@ -321,9 +333,15 @@ def analyze_weights(models, output_dir):
     
     for name in ['PG', 'QL']:
         target_model = models[name]
+        print(f"Comparing SFT vs {name} weights...")
         
         for (k1, v1), (k2, v2) in zip(base_model.named_parameters(), target_model.named_parameters()):
             assert k1 == k2, "Model architectures do not match!"
+            
+            # FIX: Check shape mismatch
+            if v1.shape != v2.shape:
+                # print(f"Skipping layer {k1} due to shape mismatch: {v1.shape} vs {v2.shape}")
+                continue
             
             diff = (v1 - v2).norm().item()
             rel_diff = diff / (v1.norm().item() + 1e-9)
@@ -353,12 +371,16 @@ def analyze_weights(models, output_dir):
                 'Relative Diff': rel_diff
             })
             
+    if not diff_results:
+        print("No matching weights found to compare.")
+        return
+
     df = pd.DataFrame(diff_results)
     
     # 1. Overall Change Magnitude by Layer Type
     plt.figure(figsize=(12, 6))
     sns.barplot(data=df, x='Layer Type', y='Relative Diff', hue='Method', errorbar=None)
-    plt.title("Relative Weight Change by Module Type")
+    plt.title("Relative Weight Change by Module Type (Matching Layers Only)")
     plt.ylabel("Relative L2 Norm Difference")
     plt.savefig(os.path.join(output_dir, 'weight_change_by_type.png'))
     plt.close()
@@ -367,15 +389,17 @@ def analyze_weights(models, output_dir):
     if df['Layer Num'].max() >= 0:
         plt.figure(figsize=(12, 6))
         df_blocks = df[df['Layer Num'] >= 0]
-        sns.lineplot(data=df_blocks, x='Layer Num', y='Relative Diff', hue='Method', marker='o')
-        plt.title("Weight Change across Layers")
-        plt.savefig(os.path.join(output_dir, 'weight_change_layers.png'))
+        if not df_blocks.empty:
+            sns.lineplot(data=df_blocks, x='Layer Num', y='Relative Diff', hue='Method', marker='o')
+            plt.title("Weight Change across Layers")
+            plt.savefig(os.path.join(output_dir, 'weight_change_layers.png'))
         plt.close()
         
     # 3. Top Changed Parameters
     print("\nTop 5 Changed Parameters (Relative) for QL:")
     top_ql = df[df['Method'] == 'QL'].sort_values('Relative Diff', ascending=False).head(5)
-    print(top_ql[['Layer Name', 'Relative Diff']])
+    if not top_ql.empty:
+        print(top_ql[['Layer Name', 'Relative Diff']])
     
     print("Weight analysis saved.")
 
