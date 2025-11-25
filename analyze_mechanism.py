@@ -4,6 +4,10 @@
 GraphA Mechanism Analysis Script
 对比 SFT, PG, Q-Learning 模型的内部机制。
 
+修复说明：
+1. 引入 pandas 将列表转换为 DataFrame 以兼容新版 seaborn。
+2. 优化了部分绘图逻辑。
+
 Usage:
     python analyze_mechanism.py \
         --data_dir data/datasets/graphA_pg030_tier3_P13_0 \
@@ -20,18 +24,17 @@ import json
 import torch
 import torch.nn.functional as F
 import numpy as np
+import pandas as pd  # 新增：必须导入 pandas
 import networkx as nx
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
 from collections import defaultdict
-from pathlib import Path
 from model import GPT, GPTConfig
 
 # 设置绘图风格
 sns.set_theme(style="whitegrid")
-plt.rcParams['font.sans-serif'] = ['DejaVu Sans']  # 防止中文乱码兼容性问题，用通用字体
+plt.rcParams['font.sans-serif'] = ['DejaVu Sans']  # 防止中文乱码兼容性问题
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -49,7 +52,7 @@ def load_model(ckpt_path, device, meta_vocab_size):
     checkpoint = torch.load(ckpt_path, map_location=device)
     model_args = checkpoint['model_args']
     
-    # 确保 vocab_size 正确 (有时候 ckpt 里的 vocab_size 可能和 meta 不一致，以 meta 为准或保持一致)
+    # 确保 vocab_size 正确
     model_args['vocab_size'] = meta_vocab_size
     # 强制关闭 dropout 以获得确定性输出
     model_args['dropout'] = 0.0
@@ -64,9 +67,6 @@ def load_model(ckpt_path, device, meta_vocab_size):
         if k.startswith(unwanted_prefix):
             state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
             
-    # 处理 block_size 可能不匹配的问题 (简单的截断或填充逻辑，参考你的训练脚本)
-    # 这里简化处理：假设 ckpt 和 config 一致，或者直接加载
-    # 如果报错，请参考训练脚本中的 load_state_dict_with_block_resize 函数
     try:
         model.load_state_dict(state_dict, strict=False)
     except Exception as e:
@@ -127,10 +127,6 @@ def analyze_logits(models, samples, stoi, itos, device, output_dir):
     
     for sample in samples:
         # Context: [S1, S3, S1, S2_node]
-        # 我们想看模型在生成 S2_node 之后，预测下一个 token 的概率分布
-        # SFT 可能会预测 EOS (停止)
-        # RL 应该预测 S3_node (继续)
-        
         context = [
             stoi[str(sample['src'])],
             stoi[str(sample['tgt'])],
@@ -169,7 +165,9 @@ def analyze_logits(models, samples, stoi, itos, device, output_dir):
     for name, res in results.items():
         for r in res:
             data_eos.append({'Model': name, 'Probability': r['p_eos']})
-    sns.boxplot(data=data_eos, x='Model', y='Probability', ax=axes[0], palette="Set2")
+    # FIX: Convert to DataFrame
+    df_eos = pd.DataFrame(data_eos)
+    sns.boxplot(data=df_eos, x='Model', y='Probability', ax=axes[0], palette="Set2")
     axes[0].set_title('Probability of Stop Token (<EOS>) at S2')
     axes[0].set_ylabel('P(EOS)')
 
@@ -178,7 +176,9 @@ def analyze_logits(models, samples, stoi, itos, device, output_dir):
     for name, res in results.items():
         for r in res:
             data_tgt.append({'Model': name, 'Probability': r['p_target']})
-    sns.boxplot(data=data_tgt, x='Model', y='Probability', ax=axes[1], palette="Set2")
+    # FIX: Convert to DataFrame
+    df_tgt = pd.DataFrame(data_tgt)
+    sns.boxplot(data=df_tgt, x='Model', y='Probability', ax=axes[1], palette="Set2")
     axes[1].set_title('Probability of Correct Target S3 at S2')
     
     # Plot 3: Entropy
@@ -186,7 +186,9 @@ def analyze_logits(models, samples, stoi, itos, device, output_dir):
     for name, res in results.items():
         for r in res:
             data_ent.append({'Model': name, 'Entropy': r['entropy']})
-    sns.boxplot(data=data_ent, x='Model', y='Entropy', ax=axes[2], palette="Set2")
+    # FIX: Convert to DataFrame
+    df_ent = pd.DataFrame(data_ent)
+    sns.boxplot(data=df_ent, x='Model', y='Entropy', ax=axes[2], palette="Set2")
     axes[2].set_title('Prediction Entropy at S2')
     
     plt.tight_layout()
@@ -196,31 +198,26 @@ def analyze_logits(models, samples, stoi, itos, device, output_dir):
 
 # --- Analysis 2: Hidden States (Representation) ---
 def get_last_hidden_state(model, x):
-    # Hook function to capture output of the last block
     hidden_states = []
     def hook_fn(module, input, output):
         hidden_states.append(output)
     
     # Register hook on the last transformer block
-    # model.transformer.h is a ModuleList
     handle = model.transformer.h[-1].register_forward_hook(hook_fn)
     
     with torch.no_grad():
         model(x)
         
     handle.remove()
-    # output shape: [batch, seq_len, embed_dim]
-    # We want the last token's embedding: [1, -1, embed_dim]
     return hidden_states[0][0, -1, :].cpu().numpy()
 
 def analyze_hidden_states(models, samples, stoi, device, output_dir):
     print("Running Hidden State Analysis...")
     
-    # 准备数据
     X_data = defaultdict(list)
-    y_labels = [] # 这里的 label 是 Target S3 的 ID，用于看聚类
+    y_labels = [] 
     
-    # 为了可视化清晰，我们只选前 5-10 个最常见的 S3 目标进行可视化，否则颜色太多
+    # 过滤 Top Targets 以便于可视化
     from collections import Counter
     tgt_counts = Counter([s['tgt'] for s in samples])
     top_targets = set([t for t, c in tgt_counts.most_common(8)])
@@ -241,44 +238,57 @@ def analyze_hidden_states(models, samples, stoi, device, output_dir):
             vec = get_last_hidden_state(model, x)
             X_data[name].append(vec)
             
-        y_labels.append(str(sample['tgt'])) # Label is the target node ID
+        y_labels.append(str(sample['tgt']))
         
     # t-SNE Visualization
     fig, axes = plt.subplots(1, 3, figsize=(20, 6))
     
     for idx, (name, vectors) in enumerate(X_data.items()):
         vectors = np.array(vectors)
-        # 先用 PCA 降维到 50 (如果维度很高)，这里维度只有 92/120，可以直接 t-SNE
-        tsne = TSNE(n_components=2, random_state=42, perplexity=30, init='pca', learning_rate='auto')
+        if len(vectors) == 0: continue
+        
+        tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(vectors)-1), init='pca', learning_rate='auto')
         X_embedded = tsne.fit_transform(vectors)
         
-        # Scatter plot
         sns.scatterplot(
             x=X_embedded[:,0], y=X_embedded[:,1], 
             hue=y_labels, 
             palette="tab10", 
             ax=axes[idx],
-            legend=False, # 关闭图例防止遮挡，颜色代表不同的 S3 目标
+            legend=False, 
             s=60, alpha=0.8
         )
         axes[idx].set_title(f"{name} Hidden Space (Colored by Target S3)")
         axes[idx].grid(True, linestyle='--', alpha=0.3)
         
-    # Add a single legend manually if needed, or just explain in caption
     plt.suptitle("t-SNE of Hidden States at S2 Node (Do they cluster by Goal?)", fontsize=16)
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'hidden_state_tsne.png'))
     plt.close()
     
-    # Cosine Similarity Analysis (SFT vs RL)
-    # 计算 SFT 和 RL 对应样本的余弦相似度
+    # Cosine Similarity Analysis
     print("Calculating Cosine Similarity between SFT and RL models...")
     sim_pg = []
     sim_ql = []
     
-    vecs_sft = np.array(X_data['SFT'])
-    vecs_pg = np.array(X_data['PG'])
-    vecs_ql = np.array(X_data['QL'])
+    # 使用原始 samples 对应的全量数据进行相似度计算，而不是 filtered
+    # 重新跑一遍全量数据的 hidden state 提取 (为了准确性)
+    print("Extracting full hidden states for similarity metrics...")
+    full_vecs = defaultdict(list)
+    for sample in samples: # 使用全量 samples
+        context = [
+            stoi[str(sample['src'])],
+            stoi[str(sample['tgt'])],
+            stoi[str(sample['src'])],
+            stoi[str(sample['s2_step'])]
+        ]
+        x = torch.tensor(context, dtype=torch.long, device=device).unsqueeze(0)
+        for name, model in models.items():
+            full_vecs[name].append(get_last_hidden_state(model, x))
+
+    vecs_sft = np.array(full_vecs['SFT'])
+    vecs_pg = np.array(full_vecs['PG'])
+    vecs_ql = np.array(full_vecs['QL'])
     
     def cosine_sim(v1, v2):
         norm1 = np.linalg.norm(v1)
@@ -290,11 +300,14 @@ def analyze_hidden_states(models, samples, stoi, device, output_dir):
         sim_ql.append(cosine_sim(vecs_sft[i], vecs_ql[i]))
         
     plt.figure(figsize=(8, 5))
-    sns.kdeplot(sim_pg, label='SFT vs PG', fill=True)
-    sns.kdeplot(sim_ql, label='SFT vs QL', fill=True)
+    # FIX: Convert to DataFrame for KDE plot
+    df_sim = pd.DataFrame({
+        'Cosine Similarity': sim_pg + sim_ql,
+        'Comparison': ['SFT vs PG'] * len(sim_pg) + ['SFT vs QL'] * len(sim_ql)
+    })
+    sns.kdeplot(data=df_sim, x='Cosine Similarity', hue='Comparison', fill=True)
+    
     plt.title("Distribution of Cosine Similarity (Representation Drift)")
-    plt.xlabel("Cosine Similarity")
-    plt.legend()
     plt.savefig(os.path.join(output_dir, 'representation_drift.png'))
     plt.close()
     print("Hidden state analysis saved.")
@@ -309,16 +322,12 @@ def analyze_weights(models, output_dir):
     for name in ['PG', 'QL']:
         target_model = models[name]
         
-        # 遍历每一层参数
         for (k1, v1), (k2, v2) in zip(base_model.named_parameters(), target_model.named_parameters()):
             assert k1 == k2, "Model architectures do not match!"
             
-            # 计算 L2 距离 (Norm of difference)
             diff = (v1 - v2).norm().item()
-            # 计算相对变化 (Relative change)
             rel_diff = diff / (v1.norm().item() + 1e-9)
             
-            # Categorize layers
             layer_type = "Other"
             if "wte" in k1 or "wpe" in k1: layer_type = "Embedding"
             elif "attn" in k1: layer_type = "Attention"
@@ -326,7 +335,6 @@ def analyze_weights(models, output_dir):
             elif "ln" in k1: layer_type = "LayerNorm"
             elif "lm_head" in k1: layer_type = "LM Head"
             
-            # Extract layer number if exists
             layer_num = -1
             if ".h." in k1:
                 try:
@@ -345,8 +353,6 @@ def analyze_weights(models, output_dir):
                 'Relative Diff': rel_diff
             })
             
-    # Visualization
-    import pandas as pd
     df = pd.DataFrame(diff_results)
     
     # 1. Overall Change Magnitude by Layer Type
@@ -357,18 +363,16 @@ def analyze_weights(models, output_dir):
     plt.savefig(os.path.join(output_dir, 'weight_change_by_type.png'))
     plt.close()
     
-    # 2. Layer-wise Change (if multi-layer)
-    # 如果只有1层，这个图可能没意义，但代码通用
-    if df['Layer Num'].max() > 0:
+    # 2. Layer-wise Change
+    if df['Layer Num'].max() >= 0:
         plt.figure(figsize=(12, 6))
-        # Filter only transformer blocks
         df_blocks = df[df['Layer Num'] >= 0]
         sns.lineplot(data=df_blocks, x='Layer Num', y='Relative Diff', hue='Method', marker='o')
         plt.title("Weight Change across Layers")
         plt.savefig(os.path.join(output_dir, 'weight_change_layers.png'))
         plt.close()
         
-    # 3. Top 10 Changed Parameters
+    # 3. Top Changed Parameters
     print("\nTop 5 Changed Parameters (Relative) for QL:")
     top_ql = df[df['Method'] == 'QL'].sort_values('Relative Diff', ascending=False).head(5)
     print(top_ql[['Layer Name', 'Relative Diff']])
