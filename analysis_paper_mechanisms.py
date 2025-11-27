@@ -183,14 +183,14 @@ def create_model_from_checkpoint(ckpt_path: Path, device: torch.device) -> GPT:
 # 核心分析逻辑 1: 行为分类 (Behavior Classification)
 # ---------------------------------------------------------------------------
 
-def run_greedy_generation(model, stoi, itos, source, target, max_new_tokens, device, stop_token_id):
+def run_greedy_generation(model, stoi, itos, source, target, max_new_tokens, device, stop_token_id,temperature,top_k):
     # Prompt: S -> T -> S
     prompt_ids = [stoi[str(source)], stoi[str(target)], stoi[str(source)]]
     context = torch.tensor([prompt_ids], dtype=torch.long, device=device)
     
     with torch.no_grad():
         # Greedy decoding (top_k=1 implicitly via argmax if temp=0, or use generate default)
-        generated = model.generate(context, max_new_tokens=max_new_tokens, temperature=0.0, top_k=1)[0].tolist()
+        generated = model.generate(context, max_new_tokens=max_new_tokens, temperature=temperature, top_k=top_k)[0].tolist()
     
     new_ids = generated[len(prompt_ids):]
     digits = []
@@ -445,7 +445,7 @@ def main():
             # --- A. 行为生成 (Greedy) ---
             gen_digits, stop_reached = run_greedy_generation(
                 model, stoi, itos, info.source, info.target, 
-                args.max_new_tokens, device, stop_token_id
+                args.max_new_tokens, device, stop_token_id,args.temperature,args.top_k
             )
             
             # 关键修正：手动拼接 Source
