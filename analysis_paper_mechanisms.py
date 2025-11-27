@@ -94,7 +94,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--step-end", type=int, required=True)
     parser.add_argument("--step-interval", type=int, required=True)
     
-    parser.add_argument("--max-samples", type=int, default=1000, help="Max pairs to analyze (0 for all)")
+    parser.add_argument("--max-samples", type=int, default=0, help="Max pairs to analyze (0 for all)")
     parser.add_argument("--sample-seed", type=int, default=2025)
     
     parser.add_argument("--max-new-tokens", type=int, default=32)
