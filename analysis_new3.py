@@ -396,26 +396,26 @@ def aggregate_phase_events(records: List[PhaseEventRecord]) -> Dict[str, float]:
     eventA_total = sum(1 for r in records if r.legal_start)
     eventA_rate = eventA_total / total if total else 0.0
 
-    eventB_success = sum(1 for r in records if r.legal_start and r.bridge_hit)
+    eventB_success = sum(1 for r in records if r.legal_start and r.bridge_hit_any)
     eventB_total = eventA_total
     eventB_rate_given_A = eventB_success / eventB_total if eventB_total else 0.0
 
     eventB_total_available = sum(1 for r in records if r.legal_start and r.stage2_available)
     eventB_success_available = sum(
-        1 for r in records if r.legal_start and r.stage2_available and r.bridge_hit
+        1 for r in records if r.legal_start and r.stage2_available and r.bridge_hit_any
     )
     eventB_rate_given_A_and_available = (
         eventB_success_available / eventB_total_available if eventB_total_available else 0.0
     )
 
     eventC_success = sum(
-        1 for r in records if r.legal_start and r.bridge_hit and r.stage3_after_bridge
+        1 for r in records if r.legal_start and r.bridge_hit_any and r.stage3_after_bridge
     )
     eventC_total = eventB_success
     eventC_rate_given_AB = eventC_success / eventC_total if eventC_total else 0.0
 
     eventD_success = sum(
-        1 for r in records if r.legal_start and r.bridge_hit and r.stage3_after_bridge and r.path_success
+        1 for r in records if r.legal_start and r.bridge_hit_any and r.stage3_after_bridge and r.path_success
     )
     eventD_total = eventC_success
     eventD_rate_given_ABC = eventD_success / eventD_total if eventD_total else 0.0
@@ -425,7 +425,7 @@ def aggregate_phase_events(records: List[PhaseEventRecord]) -> Dict[str, float]:
     )
     success_gap = success_rate - expected_success
 
-    bridge_hit_any_total = sum(1 for r in records if r.bridge_hit)
+    bridge_hit_any_total = sum(1 for r in records if r.bridge_hit_any)
     bridge_hit_any_rate = bridge_hit_any_total / total if total else 0.0
 
     first_stage2_is_bridge_total = sum(
@@ -463,10 +463,10 @@ def aggregate_phase_events(records: List[PhaseEventRecord]) -> Dict[str, float]:
 
     success_without_stage2 = sum(1 for r in records if r.path_success and not r.hit_stage2)
     success_with_stage2_no_bridge = sum(
-        1 for r in records if r.path_success and r.hit_stage2 and not r.bridge_hit
+        1 for r in records if r.path_success and r.hit_stage2 and not r.bridge_hit_any
     )
     success_with_bridge = sum(
-        1 for r in records if r.path_success and r.bridge_hit
+        1 for r in records if r.path_success and r.bridge_hit_any
     )
 
     avg_bridge_candidates_available = (
