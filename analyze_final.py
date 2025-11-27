@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-S1→S3 组合任务分析脚本（终极修正版）。
+S1→S3 组合任务分析脚本（终极修正版 - 修复CSV写入Bug）。
 统一标准：Prompt 结束于 Source，模型生成 Next Node。
 分析时必须手动拼接 Source 才能构成完整路径。
 """
@@ -388,10 +388,23 @@ def aggregate_stage_events(records):
 
 
 def write_csv(path, rows):
+    """
+    修复版 CSV 写入函数。
+    先扫描所有行以获取完整的 key 集合，避免因不同步数出现的错误类型不同而导致 ValueError。
+    """
     if not rows: return
-    keys = sorted(rows[0].keys())
+    
+    # 1. 扫描所有行，获取所有出现过的 key
+    all_keys = set()
+    for r in rows:
+        all_keys.update(r.keys())
+    
+    # 2. 排序 key 以保证列顺序稳定
+    keys = sorted(list(all_keys))
+    
     with open(path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=keys)
+        # 3. 使用 restval=0，如果某行缺少某个 key（例如某步没有 NO_EOS），自动填 0
+        writer = csv.DictWriter(f, fieldnames=keys, restval=0)
         writer.writeheader()
         writer.writerows(rows)
 
