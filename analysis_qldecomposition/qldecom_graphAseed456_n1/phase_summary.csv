@@ -1,0 +1,11 @@
+decomposition_chain_rate,eventA_prime_rate,eventA_prime_total,eventB_prime_rate_given_A,eventB_prime_total,eventC_prime_rate_given_AB,eventC_prime_total,eventD_prime_rate_given_ABC,eventD_prime_total,hit_stage3_rate,hit_stage3_total,stage2_available_rate,stage2_available_total,stage2_stop_reason_count_NO_STOP,stage2_stop_reason_count_STOP_AT_STAGE3,stage2_stop_reason_rate_NO_STOP,stage2_stop_reason_rate_STOP_AT_STAGE3,stage2_stop_success_rate,stage2_stop_success_total,stage2_stop_token_rate,stage2_stop_token_total,stage3_stop_success_rate,stage3_stop_success_total,step,success_rate,success_total,task_type,total_pairs
+0.0,1.0,92,1.0,92,0.0,0,0.0,0,1.0,92,0.0,0,6,86,0.06521739130434782,0.9347826086956522,0.0,0,0.0,0,0.0,0,2000,0.0,0,s1s2,92
+0.0,1.0,92,1.0,92,0.0,0,0.0,0,1.0,92,0.0,0,0,92,0,1.0,0.0,0,0.0,0,0.0,0,4000,0.0,0,s1s2,92
+0.0,1.0,92,1.0,92,0.0,0,0.0,0,1.0,92,0.0,0,0,92,0,1.0,0.0,0,0.0,0,0.0,0,6000,0.0,0,s1s2,92
+0.0,1.0,92,1.0,92,0.0,0,0.0,0,1.0,92,0.0,0,0,92,0,1.0,0.0,0,0.0,0,0.0,0,8000,0.0,0,s1s2,92
+0.0,1.0,92,1.0,92,0.0,0,0.0,0,1.0,92,0.0,0,0,92,0,1.0,0.0,0,0.0,0,0.0,0,10000,0.0,0,s1s2,92
+0.0,1.0,92,1.0,92,0.0,0,0.0,0,1.0,92,0.0,0,0,92,0,1.0,0.0,0,0.0,0,0.0,0,12000,0.0,0,s1s2,92
+0.0,1.0,92,1.0,92,0.0,0,0.0,0,1.0,92,0.0,0,0,92,0,1.0,0.0,0,0.0,0,0.0,0,14000,0.0,0,s1s2,92
+0.0,1.0,92,1.0,92,0.0,0,0.0,0,1.0,92,0.0,0,0,92,0,1.0,0.0,0,0.0,0,0.0,0,16000,0.0,0,s1s2,92
+0.0,1.0,92,1.0,92,0.0,0,0.0,0,1.0,92,0.0,0,0,92,0,1.0,0.0,0,0.0,0,0.0,0,18000,0.0,0,s1s2,92
+0.0,1.0,92,1.0,92,0.0,0,0.0,0,1.0,92,0.0,0,2,90,0.021739130434782608,0.9782608695652174,0.0,0,0.0,0,0.0,0,20000,0.0,0,s1s2,92
