@@ -4,26 +4,11 @@
 Qwen (HF) training script for GraphA Tier-3 datasets (H800-friendly).
 
 Expects:
-  - train_{K}.bin (uint32) and val.bin (uint32) from NEW prepare script
+  - train_{K}.bin (uint32) and val.bin (uint32) from prepare_qwen.py
   - meta.pkl with hf_model, pad/eos ids, seq_len, block_size
-  - tokenizer/ directory saved by prepare script (optional but recommended)
+  - tokenizer/ directory saved by prepare_qwen.py (REQUIRED for pad consistency)
 
 This script trains a HF causal LM and evaluates by generating paths and checking graph validity.
-
-Usage (recommended for H800):
-  python train_composition_fixed_final.py \
-    --data_dir data/datasets/graphA_pg020_tier3 \
-    --train_paths_per_pair 20 \
-    --device cuda:0 \
-    --max_iters 20000 \
-    --test_interval 1000 \
-    --checkpoint_interval 5000 \
-    --batch_size 128 \
-    --grad_accum_steps 1 \
-    --learning_rate 2e-4 \
-    --dtype bf16 \
-    --gradient_checkpointing \
-    --lora_r 16
 """
 
 from __future__ import annotations
@@ -107,8 +92,8 @@ def get_batch(
     x_list = []
     y_list = []
     for off in offsets:
-        x = torch.from_numpy(data[off : off + block_size].astype(np.int64))
-        y = torch.from_numpy(data[off + 1 : off + 1 + block_size].astype(np.int64))
+        x = torch.from_numpy(data[off: off + block_size].astype(np.int64))
+        y = torch.from_numpy(data[off + 1: off + 1 + block_size].astype(np.int64))
         x_list.append(x)
         y_list.append(y)
 
@@ -158,7 +143,6 @@ def evaluate_composition_qwen(
     for path_type, cases in buckets.items():
         correct = 0
         for i, (source, target) in enumerate(cases):
-            # Prompt format matches your dataset style
             prompt = f"{source} {target} {source} "
             x = tokenizer(prompt, return_tensors="pt", add_special_tokens=False).input_ids.to(device)
 
@@ -175,7 +159,6 @@ def evaluate_composition_qwen(
             out_text = tokenizer.decode(gen[0], skip_special_tokens=True)
             nums = extract_numbers_first_line(out_text)
 
-            # first three numbers correspond to: source target source (from the prompt)
             generated_path = nums[2:] if len(nums) >= 3 else []
 
             valid = False
@@ -268,20 +251,27 @@ def main() -> None:
         stage_info = pickle.load(f)
     stages = stage_info["stages"]
 
-    # meta from new prepare
+    # meta from prepare
     with open(data_dir / "meta.pkl", "rb") as f:
         meta = pickle.load(f)
 
     if meta.get("format") != "hf_tokenized":
-        raise ValueError("meta.pkl is not HF-tokenized. Please rerun prepare_compositionnew.py.")
+        raise ValueError("meta.pkl is not HF-tokenized. Please rerun prepare_qwen.py.")
 
     hf_model = meta["hf_model"]
     block_size = int(meta["block_size"])
     seq_len = int(meta["seq_len"])
     pad_id = int(meta["pad_token_id"])
+    eos_id = meta.get("eos_token_id", None)
+    trust_remote_code = bool(meta.get("trust_remote_code", False))
 
     logger.info("HF model: %s", hf_model)
-    logger.info("seq_len=%d, block_size=%d, pad_id=%d", seq_len, block_size, pad_id)
+    logger.info("seq_len=%d, block_size=%d, pad_id=%d, eos_id=%s", seq_len, block_size, pad_id, str(eos_id))
+    if eos_id is not None and int(eos_id) == int(pad_id):
+        raise RuntimeError(
+            f"FATAL: pad_token_id == eos_token_id == {pad_id}. "
+            f"This dataset was prepared incorrectly. Please rerun prepare_qwen.py (PAD fix)."
+        )
 
     train_bin = data_dir / f"train_{args.train_paths_per_pair}.bin"
     val_bin = data_dir / "val.bin"
@@ -290,36 +280,60 @@ def main() -> None:
     if not val_bin.exists():
         raise FileNotFoundError(f"Validation bin not found: {val_bin}")
 
-    # IMPORTANT: uint32
     train_data = np.memmap(train_bin, dtype=np.uint32, mode="r")
     val_data = np.memmap(val_bin, dtype=np.uint32, mode="r")
 
     G = nx.read_graphml(data_dir / "composition_graph.graphml")
     test_file = data_dir / "test.txt"
 
-    # tokenizer: prefer locally saved tokenizer for exact pad token consistency
+    # Tokenizer: MUST prefer locally saved tokenizer
     tok_dir = data_dir / "tokenizer"
-    if tok_dir.exists():
-        tokenizer = AutoTokenizer.from_pretrained(tok_dir, use_fast=True)
-        logger.info("Loaded tokenizer from %s", str(tok_dir))
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(hf_model, use_fast=True)
-        logger.info("Loaded tokenizer from HF: %s", hf_model)
+    if not tok_dir.exists():
+        raise FileNotFoundError(
+            f"Tokenizer dir not found: {tok_dir}. "
+            f"Please rerun prepare_qwen.py; it should save tokenizer/."
+        )
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        tok_dir,
+        use_fast=True,
+        trust_remote_code=trust_remote_code,
+    )
+    logger.info("Loaded tokenizer from %s", str(tok_dir))
 
     if tokenizer.pad_token_id is None:
-        raise ValueError("Tokenizer still has no pad_token_id. Please rerun prepare script.")
+        raise RuntimeError("Tokenizer has no pad_token_id. Your prepare step is broken.")
+    if tokenizer.eos_token_id is not None and tokenizer.pad_token_id == tokenizer.eos_token_id:
+        raise RuntimeError("Tokenizer invariant violated: pad_token_id == eos_token_id. Rerun prepare.")
+
+    if int(tokenizer.pad_token_id) != int(pad_id):
+        raise RuntimeError(
+            f"pad_token_id mismatch between meta and tokenizer! meta={pad_id}, tokenizer={tokenizer.pad_token_id}. "
+            f"Please delete stale meta/bin and rerun prepare."
+        )
 
     torch_dtype = _torch_dtype(args.dtype)
-    model = AutoModelForCausalLM.from_pretrained(hf_model, torch_dtype=torch_dtype).to(device)
+    model = AutoModelForCausalLM.from_pretrained(
+        hf_model,
+        torch_dtype=torch_dtype,
+        trust_remote_code=trust_remote_code,
+    ).to(device)
+
+    # Important config for padding & generation
     model.config.use_cache = False
+    model.config.pad_token_id = int(pad_id)
+    if hasattr(model, "generation_config") and model.generation_config is not None:
+        model.generation_config.pad_token_id = int(pad_id)
+        if tokenizer.eos_token_id is not None:
+            model.generation_config.eos_token_id = int(tokenizer.eos_token_id)
 
-    # If we added new PAD token, we must resize embeddings
-    if int(meta.get("tokenizer_len", len(tokenizer))) != model.get_input_embeddings().weight.shape[0]:
-        # meta tokenizer_len is the tokenizer length at prepare time
-        pass
-
+    # Resize embeddings BEFORE LoRA
     if model.get_input_embeddings().weight.shape[0] != len(tokenizer):
-        logger.info("Resizing token embeddings: %d -> %d", model.get_input_embeddings().weight.shape[0], len(tokenizer))
+        logger.info(
+            "Resizing token embeddings: %d -> %d",
+            model.get_input_embeddings().weight.shape[0],
+            len(tokenizer),
+        )
         model.resize_token_embeddings(len(tokenizer))
 
     if args.gradient_checkpointing:
@@ -340,8 +354,10 @@ def main() -> None:
     running_loss = 0.0
     loss_counter = 0
 
-    logger.info("Training: batch_size=%d, grad_accum_steps=%d, dtype=%s, lora_r=%d",
-                args.batch_size, args.grad_accum_steps, args.dtype, args.lora_r)
+    logger.info(
+        "Training: batch_size=%d, grad_accum_steps=%d, dtype=%s, lora_r=%d",
+        args.batch_size, args.grad_accum_steps, args.dtype, args.lora_r
+    )
 
     use_amp = (device.type == "cuda" and args.dtype in ["bf16", "fp16"])
     scaler = torch.cuda.amp.GradScaler() if (device.type == "cuda" and args.dtype == "fp16") else None
