@@ -1,0 +1,29 @@
+[2025-12-22 22:48:22,042][INFO] Starting Qwen GraphA Tier-3 training on cuda:0
+[2025-12-22 22:48:22,043][INFO] HF model: Qwen/Qwen2.5-3B
+[2025-12-22 22:48:22,043][INFO] seq_len=64, block_size=63, pad_id=151665, eos_id=151643
+[2025-12-22 22:48:22,052][INFO] Eval buckets: S1->S2=296, S2->S3=301, S1->S3=450
+[2025-12-22 22:48:22,349][INFO] Loaded tokenizer from /userhome/cs3/u3612899/LLM8/data/datasets/graphA_pg030_tier3_P13_0_qwen3b/tokenizer
+[2025-12-22 22:48:22,352][DEBUG] Starting new HTTPS connection (1): huggingface.co:443
+[2025-12-22 22:48:22,599][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/config.json HTTP/1.1" 307 0
+[2025-12-22 22:48:22,605][DEBUG] https://huggingface.co:443 "HEAD /api/resolve-cache/models/Qwen/Qwen2.5-3B/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/config.json HTTP/1.1" 200 0
+[2025-12-22 22:48:23,921][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/generation_config.json HTTP/1.1" 307 0
+[2025-12-22 22:48:23,925][DEBUG] https://huggingface.co:443 "HEAD /api/resolve-cache/models/Qwen/Qwen2.5-3B/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/generation_config.json HTTP/1.1" 200 0
+[2025-12-22 22:48:24,153][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/custom_generate/generate.py HTTP/1.1" 404 0
+[2025-12-22 22:48:25,634][INFO] Resizing token embeddings: 151936 -> 151666
+[2025-12-22 22:48:26,226][INFO] Training: batch_size=32, grad_accum_steps=4, dtype=bf16, lora_r=16
+[2025-12-22 22:48:26,227][INFO] Eval: eval_batch_size=32, eval_num_val_batches=2, eval_gen_batch_size=64, eval_max_cases_per_bucket=50, eval_full_interval=5000, eval_do_sample=False
+[2025-12-22 22:51:17,061][INFO] ======================================================================
+[2025-12-22 22:51:17,061][INFO] Iter 250 | lr=0.0002 | train_loss=0.7248 | val_loss=0.8432 | quick_eval
+[2025-12-22 22:51:17,061][INFO]   S1->S2: 92.00% (46/50)
+[2025-12-22 22:51:17,061][INFO]   S2->S3: 100.00% (50/50)
+[2025-12-22 22:51:17,061][INFO]   S1->S3: 98.00% (49/50)
+[2025-12-22 22:51:17,061][INFO]   overall: 96.67% (145/150)
+[2025-12-22 22:51:17,061][INFO] ======================================================================
+[2025-12-22 22:54:07,946][INFO] ======================================================================
+[2025-12-22 22:54:07,946][INFO] Iter 500 | lr=0.0002 | train_loss=0.5287 | val_loss=0.8282 | quick_eval
+[2025-12-22 22:54:07,946][INFO]   S1->S2: 98.00% (49/50)
+[2025-12-22 22:54:07,946][INFO]   S2->S3: 98.00% (49/50)
+[2025-12-22 22:54:07,946][INFO]   S1->S3: 98.00% (49/50)
+[2025-12-22 22:54:07,946][INFO]   overall: 98.00% (147/150)
+[2025-12-22 22:54:07,946][INFO] ======================================================================
+[2025-12-22 22:54:07,952][INFO] Training finished. Outputs saved to out/qwen_composition_20251222_224822
