@@ -1,0 +1,54 @@
+[2025-12-22 21:42:32,219][INFO] Starting Qwen GraphA Tier-3 training on cuda:0
+[2025-12-22 21:42:32,220][INFO] HF model: Qwen/Qwen2.5-3B
+[2025-12-22 21:42:32,220][INFO] seq_len=64, block_size=63, pad_id=151665, eos_id=151643
+[2025-12-22 21:42:32,524][INFO] Loaded tokenizer from /userhome/cs3/u3612899/LLM8/data/datasets/graphA_pg030_tier3_P13_0_qwen3b/tokenizer
+[2025-12-22 21:42:32,527][DEBUG] Starting new HTTPS connection (1): huggingface.co:443
+[2025-12-22 21:42:32,767][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/config.json HTTP/1.1" 307 0
+[2025-12-22 21:42:33,152][DEBUG] https://huggingface.co:443 "HEAD /api/resolve-cache/models/Qwen/Qwen2.5-3B/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/config.json HTTP/1.1" 200 0
+[2025-12-22 21:42:33,153][DEBUG] Attempting to acquire lock 22946329685504 on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/acd0065677f7999d568f327c94188adbbcb6e158.lock
+[2025-12-22 21:42:33,153][DEBUG] Lock 22946329685504 acquired on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/acd0065677f7999d568f327c94188adbbcb6e158.lock
+[2025-12-22 21:42:33,442][DEBUG] https://huggingface.co:443 "GET /api/resolve-cache/models/Qwen/Qwen2.5-3B/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/config.json HTTP/1.1" 200 683
+[2025-12-22 21:42:33,447][DEBUG] Attempting to release lock 22946329685504 on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/acd0065677f7999d568f327c94188adbbcb6e158.lock
+[2025-12-22 21:42:33,447][DEBUG] Lock 22946329685504 released on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/acd0065677f7999d568f327c94188adbbcb6e158.lock
+[2025-12-22 21:42:33,686][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/adapter_config.json HTTP/1.1" 404 0
+[2025-12-22 21:42:35,429][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/model.safetensors HTTP/1.1" 404 0
+[2025-12-22 21:42:35,669][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/model.safetensors.index.json HTTP/1.1" 307 0
+[2025-12-22 21:42:36,072][DEBUG] https://huggingface.co:443 "HEAD /api/resolve-cache/models/Qwen/Qwen2.5-3B/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/model.safetensors.index.json HTTP/1.1" 200 0
+[2025-12-22 21:42:36,073][DEBUG] Attempting to acquire lock 22946322712608 on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/38047c6284a25427043f0ab040f623a2a20dd093.lock
+[2025-12-22 21:42:36,073][DEBUG] Lock 22946322712608 acquired on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/38047c6284a25427043f0ab040f623a2a20dd093.lock
+[2025-12-22 21:42:36,464][DEBUG] https://huggingface.co:443 "GET /api/resolve-cache/models/Qwen/Qwen2.5-3B/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/model.safetensors.index.json HTTP/1.1" 200 None
+[2025-12-22 21:42:36,469][DEBUG] Attempting to release lock 22946322712608 on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/38047c6284a25427043f0ab040f623a2a20dd093.lock
+[2025-12-22 21:42:36,469][DEBUG] Lock 22946322712608 released on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/38047c6284a25427043f0ab040f623a2a20dd093.lock
+[2025-12-22 21:42:36,703][DEBUG] https://huggingface.co:443 "GET /api/models/Qwen/Qwen2.5-3B/revision/main HTTP/1.1" 200 4553
+[2025-12-22 21:42:36,707][DEBUG] Starting new HTTPS connection (1): huggingface.co:443
+[2025-12-22 21:42:36,708][DEBUG] Starting new HTTPS connection (1): huggingface.co:443
+[2025-12-22 21:42:36,972][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/model-00001-of-00002.safetensors HTTP/1.1" 302 0
+[2025-12-22 21:42:36,973][DEBUG] Attempting to acquire lock 22946172203984 on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/f9558df91d3b89b4826e4db37439edb52f1d62a4fd602685013e7ca6b9f60f8f.lock
+[2025-12-22 21:42:36,973][DEBUG] Lock 22946172203984 acquired on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/f9558df91d3b89b4826e4db37439edb52f1d62a4fd602685013e7ca6b9f60f8f.lock
+[2025-12-22 21:42:36,985][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/model-00002-of-00002.safetensors HTTP/1.1" 302 0
+[2025-12-22 21:42:36,997][DEBUG] Attempting to acquire lock 22946172406224 on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/51410930d5cf19a998fdb17ef0c46e4d9ace72c97a975a3331395a8a500f5edb.lock
+[2025-12-22 21:42:36,997][DEBUG] Lock 22946172406224 acquired on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/51410930d5cf19a998fdb17ef0c46e4d9ace72c97a975a3331395a8a500f5edb.lock
+[2025-12-22 21:42:37,223][DEBUG] https://huggingface.co:443 "GET /api/models/Qwen/Qwen2.5-3B/xet-read-token/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b HTTP/1.1" 200 417
+[2025-12-22 21:42:37,224][DEBUG] https://huggingface.co:443 "GET /api/models/Qwen/Qwen2.5-3B/xet-read-token/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b HTTP/1.1" 200 417
+[2025-12-22 21:42:44,724][DEBUG] Attempting to release lock 22946172406224 on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/51410930d5cf19a998fdb17ef0c46e4d9ace72c97a975a3331395a8a500f5edb.lock
+[2025-12-22 21:42:44,757][DEBUG] Lock 22946172406224 released on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/51410930d5cf19a998fdb17ef0c46e4d9ace72c97a975a3331395a8a500f5edb.lock
+[2025-12-22 21:42:45,467][DEBUG] Attempting to release lock 22946172203984 on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/f9558df91d3b89b4826e4db37439edb52f1d62a4fd602685013e7ca6b9f60f8f.lock
+[2025-12-22 21:42:45,467][DEBUG] Lock 22946172203984 released on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/f9558df91d3b89b4826e4db37439edb52f1d62a4fd602685013e7ca6b9f60f8f.lock
+[2025-12-22 21:42:46,294][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/generation_config.json HTTP/1.1" 307 0
+[2025-12-22 21:42:46,585][DEBUG] https://huggingface.co:443 "HEAD /api/resolve-cache/models/Qwen/Qwen2.5-3B/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/generation_config.json HTTP/1.1" 200 0
+[2025-12-22 21:42:46,586][DEBUG] Attempting to acquire lock 22946172201440 on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/cbbb3133034e192527e5321b4c679154e4819ab8.lock
+[2025-12-22 21:42:46,586][DEBUG] Lock 22946172201440 acquired on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/cbbb3133034e192527e5321b4c679154e4819ab8.lock
+[2025-12-22 21:42:46,880][DEBUG] https://huggingface.co:443 "GET /api/resolve-cache/models/Qwen/Qwen2.5-3B/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/generation_config.json HTTP/1.1" 200 138
+[2025-12-22 21:42:46,882][DEBUG] Attempting to release lock 22946172201440 on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/cbbb3133034e192527e5321b4c679154e4819ab8.lock
+[2025-12-22 21:42:46,882][DEBUG] Lock 22946172201440 released on /userhome/cs3/u3612899/.cache/huggingface/hub/.locks/models--Qwen--Qwen2.5-3B/cbbb3133034e192527e5321b4c679154e4819ab8.lock
+[2025-12-22 21:42:47,143][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/custom_generate/generate.py HTTP/1.1" 404 0
+[2025-12-22 21:42:52,352][INFO] Resizing token embeddings: 151936 -> 151666
+[2025-12-22 21:42:52,386][INFO] Enabled gradient checkpointing
+[2025-12-22 21:42:52,950][INFO] Training: batch_size=512, grad_accum_steps=1, dtype=bf16, lora_r=16
+[2025-12-22 22:05:04,035][INFO] ======================================================================
+[2025-12-22 22:05:04,036][INFO] Iter 0 | train_loss=nan | val_loss=2.3046
+[2025-12-22 22:05:04,036][INFO]   S1->S2: 0.00% (0/296)
+[2025-12-22 22:05:04,036][INFO]   S2->S3: 0.00% (0/301)
+[2025-12-22 22:05:04,036][INFO]   S1->S3: 0.00% (0/450)
+[2025-12-22 22:05:04,036][INFO]   overall: 0.00% (0/1047)
+[2025-12-22 22:05:04,036][INFO] ======================================================================
