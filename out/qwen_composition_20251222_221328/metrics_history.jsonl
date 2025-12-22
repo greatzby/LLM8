@@ -1,0 +1,1 @@
+{"iter": 0, "lr": 1.0000000000000001e-07, "train_loss": NaN, "val_loss": 2.3096057415008544, "accuracy": {"S1->S2": {"correct": 0, "total": 296, "accuracy": 0.0}, "S2->S3": {"correct": 0, "total": 301, "accuracy": 0.0}, "S1->S3": {"correct": 0, "total": 450, "accuracy": 0.0}, "overall": {"correct": 0, "total": 1047, "accuracy": 0.0}}}

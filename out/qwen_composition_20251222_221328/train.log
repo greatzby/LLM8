@@ -1,0 +1,20 @@
+[2025-12-22 22:13:28,581][INFO] Starting Qwen GraphA Tier-3 training on cuda:0
+[2025-12-22 22:13:28,581][INFO] HF model: Qwen/Qwen2.5-3B
+[2025-12-22 22:13:28,581][INFO] seq_len=64, block_size=63, pad_id=151665, eos_id=151643
+[2025-12-22 22:13:28,887][INFO] Loaded tokenizer from /userhome/cs3/u3612899/LLM8/data/datasets/graphA_pg030_tier3_P13_0_qwen3b/tokenizer
+[2025-12-22 22:13:28,890][DEBUG] Starting new HTTPS connection (1): huggingface.co:443
+[2025-12-22 22:13:29,138][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/config.json HTTP/1.1" 307 0
+[2025-12-22 22:13:29,182][DEBUG] https://huggingface.co:443 "HEAD /api/resolve-cache/models/Qwen/Qwen2.5-3B/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/config.json HTTP/1.1" 200 0
+[2025-12-22 22:13:30,479][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/generation_config.json HTTP/1.1" 307 0
+[2025-12-22 22:13:30,524][DEBUG] https://huggingface.co:443 "HEAD /api/resolve-cache/models/Qwen/Qwen2.5-3B/3aab1f1954e9cc14eb9509a215f9e5ca08227a9b/generation_config.json HTTP/1.1" 200 0
+[2025-12-22 22:13:30,759][DEBUG] https://huggingface.co:443 "HEAD /Qwen/Qwen2.5-3B/resolve/main/custom_generate/generate.py HTTP/1.1" 404 0
+[2025-12-22 22:13:32,472][INFO] Resizing token embeddings: 151936 -> 151666
+[2025-12-22 22:13:32,502][INFO] Enabled gradient checkpointing
+[2025-12-22 22:13:33,052][INFO] Training: batch_size=32, grad_accum_steps=1, dtype=bf16, lora_r=16
+[2025-12-22 22:34:47,340][INFO] ======================================================================
+[2025-12-22 22:34:47,341][INFO] Iter 0 | train_loss=nan | val_loss=2.3096
+[2025-12-22 22:34:47,341][INFO]   S1->S2: 0.00% (0/296)
+[2025-12-22 22:34:47,341][INFO]   S2->S3: 0.00% (0/301)
+[2025-12-22 22:34:47,341][INFO]   S1->S3: 0.00% (0/450)
+[2025-12-22 22:34:47,341][INFO]   overall: 0.00% (0/1047)
+[2025-12-22 22:34:47,341][INFO] ======================================================================
