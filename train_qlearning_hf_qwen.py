@@ -10,6 +10,10 @@ Key updates in this final version:
    - rollout_top_k can stay 1 (stable greedy)
    - epsilon exploration samples uniformly from top-N logits (default 20) => exploration without "top_k=20 divergence"
 3) Tokenizer loading: prefer tokenizer from --sft_dir if present, else fallback to data_dir/tokenizer.
+
+Patch (2025-12-23):
+- Fix PEFT adapter load "size mismatch embed_tokens/lm_head" by resizing the BASE model's
+  token embeddings to match the tokenizer vocab size *before* calling PeftModel.from_pretrained().
 """
 
 from __future__ import annotations
@@ -212,6 +216,7 @@ class NodeStreamParser:
     Consume decoded text pieces and output integer nodes separated by whitespace.
     Valid chars: digits and whitespace. Any other char => invalid_char=True.
     """
+
     def __init__(self) -> None:
         self.pending_digits: List[str] = []
 
@@ -522,11 +527,11 @@ def q_learning_loss_single_traj(
     rewards_t = torch.tensor(rewards, dtype=torch.float32, device=device)
     dones_t = torch.tensor(dones, dtype=torch.bool, device=device)
 
-    expected = y_ids[0, start_idx:start_idx + num_steps]
+    expected = y_ids[0, start_idx : start_idx + num_steps]
     if expected.numel() != actions_t.numel() or not torch.equal(expected, actions_t):
         raise ValueError("Teacher-forced expected actions != sampled actions (alignment bug).")
 
-    policy_seg = logits[start_idx:start_idx + num_steps, :]  # [T, V]
+    policy_seg = logits[start_idx : start_idx + num_steps, :]  # [T, V]
     q_selected = policy_seg.gather(-1, actions_t.unsqueeze(-1)).squeeze(-1)  # [T]
     action_logp = action_logprobs_from_logits(policy_seg, actions_t)  # [T]
 
@@ -536,7 +541,7 @@ def q_learning_loss_single_traj(
         else:
             target_logits = forward_logits(target_model, x_ids)[0].detach()
 
-        target_seg = target_logits[start_idx:start_idx + num_steps, :]
+        target_seg = target_logits[start_idx : start_idx + num_steps, :]
         next_max = torch.zeros_like(q_selected)
 
         if num_steps > 1:
@@ -566,8 +571,8 @@ def kl_loss_action_level(
     T = len(actions)
     actions_t = torch.tensor(actions, dtype=torch.long, device=device)
 
-    seg_pi = logits_pi[start_idx:start_idx + T, :]
-    seg_ref = logits_ref[start_idx:start_idx + T, :]
+    seg_pi = logits_pi[start_idx : start_idx + T, :]
+    seg_ref = logits_ref[start_idx : start_idx + T, :]
 
     logp_pi = action_logprobs_from_logits(seg_pi, actions_t)
     logp_ref = action_logprobs_from_logits(seg_ref, actions_t)
@@ -587,8 +592,8 @@ def kl_loss_full_vocab(
     logits_ref = forward_logits(ref_model, x_ids)[0]
 
     start_idx = prompt_len - 1
-    seg_pi = logits_pi[start_idx:start_idx + actions_len, :]
-    seg_ref = logits_ref[start_idx:start_idx + actions_len, :]
+    seg_pi = logits_pi[start_idx : start_idx + actions_len, :]
+    seg_ref = logits_ref[start_idx : start_idx + actions_len, :]
 
     return F.kl_div(
         F.log_softmax(seg_pi, dim=-1),
@@ -694,7 +699,15 @@ def load_policy_model_and_ref(
     sft_dir: str,
     device: torch.device,
     args: argparse.Namespace,
+    vocab_size: int,
 ):
+    """
+    IMPORTANT:
+    If sft_dir is a PEFT adapter dir, we must ensure the *base* model's embedding/lm_head
+    shapes match the tokenizer's vocab size before calling PeftModel.from_pretrained().
+    Otherwise you'll see:
+      size mismatch for embed_tokens.weight / lm_head.weight
+    """
     torch_dtype = torch.bfloat16 if args.bf16 else (torch.float16 if args.fp16 else torch.float32)
 
     def _load_base():
@@ -709,6 +722,33 @@ def load_policy_model_and_ref(
             kwargs["device_map"] = {"": device.index if device.type == "cuda" else "cpu"}
         return AutoModelForCausalLM.from_pretrained(base_model, **kwargs)
 
+    def _maybe_resize_to_tokenizer_vocab(m, name: str) -> None:
+        if vocab_size is None or vocab_size <= 0:
+            return
+        try:
+            cur = int(m.get_input_embeddings().weight.size(0))
+        except Exception:
+            return
+        if cur == int(vocab_size):
+            return
+
+        print(f"[vocab] {name}: resizing token embeddings {cur} -> {int(vocab_size)} (to match tokenizer)")
+
+        # Note: on some 4bit setups, resize may fail; give a clear error.
+        try:
+            m.resize_token_embeddings(int(vocab_size))
+            # ensure tying stays consistent (some models need this explicitly)
+            if hasattr(m, "tie_weights"):
+                try:
+                    m.tie_weights()
+                except Exception:
+                    pass
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to resize_token_embeddings for {name} (cur={cur}, target={vocab_size}). "
+                f"If you are using --load_in_4bit, try disabling it for adapter loading. Original error: {e}"
+            )
+
     sft_path = Path(sft_dir)
     has_adapter = (sft_path / "adapter_config.json").exists()
 
@@ -716,6 +756,7 @@ def load_policy_model_and_ref(
         if PeftModel is None:
             raise RuntimeError("peft not installed but adapter_config.json exists.")
         base = _load_base()
+        _maybe_resize_to_tokenizer_vocab(base, name="base(policy)")
         policy = PeftModel.from_pretrained(base, sft_dir, is_trainable=True)
     else:
         kwargs = dict(
@@ -728,12 +769,14 @@ def load_policy_model_and_ref(
         else:
             kwargs["device_map"] = {"": device.index if device.type == "cuda" else "cpu"}
         policy = AutoModelForCausalLM.from_pretrained(sft_dir, **kwargs)
+        _maybe_resize_to_tokenizer_vocab(policy, name="policy(full)")
         policy = maybe_wrap_lora(policy, args)
 
     ref = None
     if args.kl_coef > 0.0:
         if has_adapter:
             base2 = _load_base()
+            _maybe_resize_to_tokenizer_vocab(base2, name="base(ref)")
             ref = PeftModel.from_pretrained(base2, sft_dir, is_trainable=False)
         else:
             kwargs = dict(
@@ -746,6 +789,7 @@ def load_policy_model_and_ref(
             else:
                 kwargs["device_map"] = {"": device.index if device.type == "cuda" else "cpu"}
             ref = AutoModelForCausalLM.from_pretrained(sft_dir, **kwargs)
+            _maybe_resize_to_tokenizer_vocab(ref, name="ref(full)")
             ref.eval()
             for p in ref.parameters():
                 p.requires_grad = False
@@ -879,6 +923,8 @@ def main() -> None:
     if tokenizer.pad_token_id == tokenizer.eos_token_id:
         raise ValueError("pad_token_id == eos_token_id (should not happen with your prepare script).")
 
+    tokenizer_vocab_size = len(tokenizer)
+
     stage_info_path = data_dir / "stage_info.pkl"
     if not stage_info_path.exists():
         raise FileNotFoundError(f"stage_info.pkl not found: {stage_info_path}")
@@ -899,13 +945,17 @@ def main() -> None:
     out_dir = prepare_output_dir(args.log_dir)
     metrics_path = out_dir / "metrics_ql.jsonl"
     print(f"[out_dir] {out_dir}")
-    print(f"[meta] block_size={block_size}, eos_id={tokenizer.eos_token_id}, pad_id={tokenizer.pad_token_id}")
+    print(
+        f"[meta] block_size={block_size}, eos_id={tokenizer.eos_token_id}, pad_id={tokenizer.pad_token_id}, "
+        f"tokenizer_vocab_size={tokenizer_vocab_size}"
+    )
 
     policy_model, ref_model = load_policy_model_and_ref(
         base_model=args.base_model,
         sft_dir=args.sft_dir,
         device=device,
         args=args,
+        vocab_size=tokenizer_vocab_size,
     )
     policy_model.train()
 
