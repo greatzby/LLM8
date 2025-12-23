@@ -2,18 +2,16 @@
 # -*- coding: utf-8 -*-
 
 """
-Q-learning fine-tuning for graph composition datasets (HF/Qwen tokenizer).
+Final Q-learning fine-tuning for GraphA K-stage composition datasets (HF/Qwen tokenizer).
 
-Key updates in this final version:
-1) Rollout acceleration with KV cache (use_cache=True) => huge speedup, same semantics in eval mode.
-2) Epsilon exploration decoupled from rollout_top_k:
-   - rollout_top_k can stay 1 (stable greedy)
-   - epsilon exploration samples uniformly from top-N logits (default 20) => exploration without "top_k=20 divergence"
-3) Tokenizer loading: prefer tokenizer from --sft_dir if present, else fallback to data_dir/tokenizer.
+Fixes:
+- Supports arbitrary K stages (K from stage_info.pkl).
+- Validity check matches your SFT eval: must include every intermediate stage.
+- ACTION MASK (critical): restrict actions to tokens whose decoded text contains only digits/whitespace (+ eos).
+  This eliminates invalid_tok_rate ~0.9 and makes RL actually learn.
+- Backward compatible args: penalty_stage2_detour / penalty_stage3_detour accepted.
 
-Patch (2025-12-23):
-- Fix PEFT adapter load "size mismatch embed_tokens/lm_head" by resizing the BASE model's
-  token embeddings to match the tokenizer vocab size *before* calling PeftModel.from_pretrained().
+Rollout uses KV-cache for speed.
 """
 
 from __future__ import annotations
@@ -111,24 +109,38 @@ def load_pairs_unique(train_file: Path) -> List[Pair]:
     return pairs
 
 
-def bucket_for_pair(source: int, target: int, stages: Sequence[Sequence[int]]) -> Optional[BucketName]:
-    if len(stages) < 3:
+def build_node_to_stage(stages: Sequence[Sequence[int]]) -> Dict[int, int]:
+    node_to_stage: Dict[int, int] = {}
+    for si, nodes in enumerate(stages, start=1):
+        for n in nodes:
+            n = int(n)
+            if n in node_to_stage:
+                raise ValueError(f"Node {n} appears in multiple stages.")
+            node_to_stage[n] = si
+    return node_to_stage
+
+
+def bucket_for_pair_k(source: int, target: int, node_to_stage: Dict[int, int], K: int) -> Optional[BucketName]:
+    si = node_to_stage.get(int(source))
+    sj = node_to_stage.get(int(target))
+    if si is None or sj is None:
         return None
-    S1, S2, S3 = stages[:3]
-    if source in S1 and target in S2:
-        return "S1->S2"
-    if source in S2 and target in S3:
-        return "S2->S3"
-    if source in S1 and target in S3:
-        return "S1->S3"
-    return None
+    if not (1 <= si <= K and 1 <= sj <= K and si < sj):
+        return None
+    return f"S{si}->S{sj}"
 
 
-def is_valid_path(
+def required_intermediate_stages(si: int, sj: int) -> List[int]:
+    if sj <= si + 1:
+        return []
+    return list(range(si + 1, sj))
+
+
+def is_valid_path_k(
     path_nodes: List[int],
     source: int,
     target: int,
-    stages: Sequence[Sequence[int]],
+    node_to_stage: Dict[int, int],
     graph: nx.DiGraph,
 ) -> bool:
     if len(path_nodes) < 2:
@@ -136,17 +148,27 @@ def is_valid_path(
     if path_nodes[0] != source or path_nodes[-1] != target:
         return False
 
+    # edges must exist
     for u, v in zip(path_nodes[:-1], path_nodes[1:]):
         if not graph.has_edge(str(u), str(v)):
             return False
 
-    # S1->S3 must pass some S2 node
-    if len(stages) >= 3:
-        S1, S2, S3 = stages[:3]
-        if source in S1 and target in S3:
-            if not any(node in S2 for node in path_nodes[1:-1]):
-                return False
-    return True
+    si = node_to_stage.get(int(source))
+    sj = node_to_stage.get(int(target))
+    if si is None or sj is None or not (si < sj):
+        return False
+
+    req = required_intermediate_stages(int(si), int(sj))
+    if not req:
+        return True
+
+    present = set()
+    for n in path_nodes[1:-1]:
+        st = node_to_stage.get(int(n))
+        if st is not None:
+            present.add(int(st))
+
+    return all(r in present for r in req)
 
 
 def safe_max_new_tokens(block_size: int, prompt_len: int, desired: int) -> int:
@@ -165,28 +187,41 @@ def top_k_filtering(logits: Tensor, top_k: int) -> Tensor:
     return mask
 
 
+def apply_action_mask(logits_1d: Tensor, allowed_token_mask: Optional[Tensor]) -> Tensor:
+    if allowed_token_mask is None:
+        return logits_1d
+    # allowed_token_mask: [V] bool, True allowed
+    masked = logits_1d.clone()
+    masked[~allowed_token_mask] = float("-inf")
+    return masked
+
+
 def select_next_token(
     logits_1d: Tensor,
     temperature: float,
     top_k: int,
     epsilon: float,
     epsilon_explore_top_k: int,
+    allowed_token_mask: Optional[Tensor],
 ) -> int:
-    """
-    logits_1d: [V]
-
-    Final behavior:
-    - With prob epsilon: uniformly pick one token from TOP-N logits (N=epsilon_explore_top_k),
-      independent of rollout_top_k. This makes epsilon meaningful even if rollout_top_k=1.
-    - Otherwise: (optional) top-k filtering (rollout_top_k), then greedy or temperature sampling.
-    """
     logits = logits_1d.detach()
+    logits = apply_action_mask(logits, allowed_token_mask)
 
-    # epsilon exploration (decoupled from rollout_top_k)
+    # if everything is -inf (shouldn't happen), fallback to argmax original
+    if torch.isneginf(logits).all():
+        logits = logits_1d.detach()
+
+    # epsilon exploration within allowed space
     if epsilon > 0.0 and random.random() < epsilon:
         K = int(epsilon_explore_top_k)
         if K <= 0 or K >= logits.numel():
+            # sample any allowed token
+            if allowed_token_mask is not None:
+                allowed_ids = torch.nonzero(allowed_token_mask, as_tuple=False).squeeze(-1)
+                ridx = allowed_ids[torch.randint(0, allowed_ids.numel(), (1,), device=logits.device)]
+                return int(ridx.item())
             return int(torch.randint(0, logits.numel(), (1,), device=logits.device).item())
+
         _, idx = torch.topk(logits, K)
         ridx = idx[torch.randint(0, idx.numel(), (1,), device=logits.device)]
         return int(ridx.item())
@@ -200,6 +235,39 @@ def select_next_token(
 
     probs = F.softmax(logits / max(temperature, 1e-6), dim=-1)
     return int(torch.multinomial(probs, num_samples=1).item())
+
+
+# -------------------------
+# action mask builder
+# -------------------------
+def build_allowed_token_mask_digits_whitespace(
+    tokenizer,
+    device: torch.device,
+    allow_eos: bool = True,
+) -> Tensor:
+    """
+    Allowed tokens: tokens whose decoded string consists only of digits/whitespace.
+    This is the critical fix for invalid_tok_rate ~0.9.
+    """
+    V = len(tokenizer)
+    allowed = torch.zeros(V, dtype=torch.bool)
+    for tid in range(V):
+        s = tokenizer.decode([tid], skip_special_tokens=False, clean_up_tokenization_spaces=False)
+        if not s:
+            continue
+        ok = True
+        for ch in s:
+            if ch.isdigit() or ch.isspace():
+                continue
+            ok = False
+            break
+        if ok:
+            allowed[tid] = True
+
+    if allow_eos and tokenizer.eos_token_id is not None:
+        allowed[int(tokenizer.eos_token_id)] = True
+
+    return allowed.to(device)
 
 
 # -------------------------
@@ -233,7 +301,6 @@ class NodeStreamParser:
     def consume_text(self, piece: str) -> ParseResult:
         completed: List[int] = []
         invalid = False
-
         for ch in piece:
             if ch.isdigit():
                 self.pending_digits.append(ch)
@@ -244,7 +311,6 @@ class NodeStreamParser:
             else:
                 invalid = True
                 break
-
         return ParseResult(completed_nodes=completed, invalid_char=invalid)
 
     def finalize(self) -> List[int]:
@@ -283,25 +349,28 @@ def sample_trajectory_hf(
     source: int,
     target: int,
     graph: nx.DiGraph,
-    stages: Sequence[Sequence[int]],
-    stage_sets: Dict[str, set[int]],
-    pair_bucket: Optional[str],
+    node_to_stage: Dict[int, int],
+    K: int,
     args: argparse.Namespace,
     device: torch.device,
     block_size: int,
     temperature: float,
     epsilon: float,
+    allowed_token_mask: Optional[Tensor],
 ) -> Dict[str, object]:
-    """
-    Token-level rollout with KV cache acceleration.
-    Reward assigned to the token that completes a node (or eos).
-    """
     model_was_training = model.training
     model.eval()
 
     eos_id = tokenizer.eos_token_id
     if eos_id is None:
         raise ValueError("Tokenizer has no eos_token_id; cannot run rollout safely.")
+
+    si = node_to_stage.get(int(source))
+    sj = node_to_stage.get(int(target))
+    pair_bucket = bucket_for_pair_k(source, target, node_to_stage=node_to_stage, K=K)
+
+    required_stages = required_intermediate_stages(int(si), int(sj)) if (si is not None and sj is not None and si < sj) else []
+    visited_required_stages: set[int] = set()
 
     prompt_text = build_prompt_text(source, target) + " "
     prompt_ids = tokenizer(prompt_text, add_special_tokens=False).input_ids
@@ -323,45 +392,54 @@ def sample_trajectory_hf(
     hit_target = False
     invalid_transition = False
     invalid_token = False
-    visited_stage2 = False
-    stage_bridge_rewarded = False
     valid_transition_steps = 0
     invalid_transition_steps = 0
 
     allow_continue = bool(args.allow_invalid_continue)
     max_invalid = max(1, int(args.max_invalid_transitions)) if allow_continue else 1
 
+    # unified "detour penalty" for adjacent buckets (Si->S(i+1))
+    penalty_target_stage_detour = float(args.penalty_target_stage_detour)
+    # backward-compat: if user passed stage2/3 detour, fold them in
+    penalty_target_stage_detour = max(
+        penalty_target_stage_detour,
+        float(args.penalty_stage2_detour),
+        float(args.penalty_stage3_detour),
+    )
+
     def apply_node_transition(next_node: int) -> Tuple[float, bool]:
-        nonlocal current_node, hit_target, invalid_transition, visited_stage2
-        nonlocal stage_bridge_rewarded, valid_transition_steps, invalid_transition_steps
+        nonlocal current_node, hit_target, invalid_transition
+        nonlocal valid_transition_steps, invalid_transition_steps
 
         if next_node < args.node_min or next_node > args.node_max:
+            return (-args.reward_invalid_token, True)
+
+        next_stage = node_to_stage.get(int(next_node))
+        if next_stage is None:
             return (-args.reward_invalid_token, True)
 
         reward_delta = 0.0
         done = False
 
-        adjacency = graph.has_edge(str(current_node), str(next_node))
-        if adjacency:
+        if graph.has_edge(str(current_node), str(next_node)):
             valid_transition_steps += 1
             reward_delta += args.reward_valid_transition
 
-            if next_node in stage_sets.get("S2", set()):
-                visited_stage2 = True
+            # reward entering required intermediate stages
+            if args.reward_stage_bridge > 0.0 and required_stages:
+                if int(next_stage) in required_stages and int(next_stage) not in visited_required_stages:
+                    visited_required_stages.add(int(next_stage))
+                    reward_delta += float(args.reward_stage_bridge)
 
-            if pair_bucket == "S1->S3" and args.reward_stage_bridge > 0.0:
-                if (not stage_bridge_rewarded) and next_node in stage_sets.get("S2", set()):
-                    reward_delta += args.reward_stage_bridge
-                    if args.reward_stage_bridge_only_once:
-                        stage_bridge_rewarded = True
-
-            if pair_bucket == "S1->S2" and args.penalty_stage2_detour > 0.0:
-                if next_node != target and next_node in stage_sets.get("S2", set()):
-                    reward_delta -= args.penalty_stage2_detour
-
-            if pair_bucket == "S2->S3" and args.penalty_stage3_detour > 0.0:
-                if next_node != target and next_node in stage_sets.get("S3", set()):
-                    reward_delta -= args.penalty_stage3_detour
+            # detour penalty for adjacent stage transitions: entering target stage but not target node
+            if (
+                penalty_target_stage_detour > 0.0
+                and si is not None and sj is not None
+                and int(sj) == int(si) + 1
+                and int(next_stage) == int(sj)
+                and next_node != target
+            ):
+                reward_delta -= penalty_target_stage_detour
 
             if args.penalty_repeat_node > 0.0 and next_node in visited_nodes and next_node != target:
                 reward_delta -= args.penalty_repeat_node
@@ -382,14 +460,13 @@ def sample_trajectory_hf(
 
         return reward_delta, done
 
-    # ---- KV cache init: run prompt once
+    # KV cache init
     with torch.inference_mode():
         input_ids0 = torch.tensor(prompt_ids, dtype=torch.long, device=device).unsqueeze(0)
         out0 = model(input_ids=input_ids0, use_cache=True)
         past = out0.past_key_values
         last_logits = out0.logits[0, -1, :]  # [V]
 
-    # rollout token-by-token
     for _step in range(max_new):
         if len(traj_ids) >= block_size - 1:
             break
@@ -400,6 +477,7 @@ def sample_trajectory_hf(
             top_k=args.rollout_top_k,
             epsilon=epsilon,
             epsilon_explore_top_k=args.epsilon_explore_top_k,
+            allowed_token_mask=allowed_token_mask,
         )
 
         traj_ids.append(next_id)
@@ -423,6 +501,7 @@ def sample_trajectory_hf(
             pr = parser.consume_text(piece)
 
             if pr.invalid_char:
+                # should be near-zero now due to action mask
                 invalid_token = True
                 reward -= args.reward_invalid_token
                 done = True
@@ -440,7 +519,6 @@ def sample_trajectory_hf(
         if done:
             break
 
-        # advance KV cache by feeding only the last generated token
         with torch.inference_mode():
             out = model(
                 input_ids=torch.tensor([[next_id]], dtype=torch.long, device=device),
@@ -450,8 +528,8 @@ def sample_trajectory_hf(
             past = out.past_key_values
             last_logits = out.logits[0, -1, :]
 
-    # if not ended, append eos manually
-    if not sampled_ids or sampled_ids[-1] != eos_id:
+    # ensure termination with eos
+    if (not sampled_ids) or (sampled_ids[-1] != eos_id):
         sampled_ids.append(eos_id)
         traj_ids.append(eos_id)
 
@@ -466,13 +544,18 @@ def sample_trajectory_hf(
         dones.append(True)
 
     full_path_nodes = assemble_full_path(source, generated_nodes)
-    success = is_valid_path(full_path_nodes, source, target, stages, graph)
+    success = is_valid_path_k(full_path_nodes, source, target, node_to_stage=node_to_stage, graph=graph)
 
     if args.reward_type == "outcome":
         adjusted = [0.0 for _ in rewards]
         if success and hit_target:
             adjusted[-1] = float(args.reward_hit_target)
         rewards = adjusted
+
+    required_cnt = len(required_stages)
+    visited_required_cnt = len(visited_required_stages)
+    covered_all_required = (visited_required_cnt == required_cnt) if required_cnt > 0 else True
+    covered_ratio = (visited_required_cnt / required_cnt) if required_cnt > 0 else 1.0
 
     if model_was_training:
         model.train()
@@ -489,15 +572,16 @@ def sample_trajectory_hf(
         "hit_target": bool(hit_target and success),
         "invalid_transition": bool(invalid_transition),
         "invalid_token": bool(invalid_token),
-        "visited_stage2": bool(visited_stage2 or stage_bridge_rewarded),
         "valid_transition_steps": int(valid_transition_steps),
         "invalid_transition_steps": int(invalid_transition_steps),
         "bucket": pair_bucket,
+        "covered_all_required": bool(covered_all_required),
+        "covered_required_ratio": float(covered_ratio),
     }
 
 
 # -------------------------
-# loss (token-level Q-learning)
+# loss
 # -------------------------
 def q_learning_loss_single_traj(
     model,
@@ -509,7 +593,7 @@ def q_learning_loss_single_traj(
     dones: List[bool],
     device: torch.device,
     gamma: float,
-) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+) -> Tuple[Tensor, Tensor, Tensor]:
     if len(actions) == 0:
         raise ValueError("Empty actions.")
 
@@ -519,7 +603,6 @@ def q_learning_loss_single_traj(
     logits = forward_logits(model, x_ids)[0]  # [L, V]
     start_idx = prompt_len - 1
     num_steps = len(actions)
-
     if start_idx + num_steps > logits.size(0):
         raise ValueError("Action segment exceeds logits length. Check block_size/prompt_len.")
 
@@ -531,9 +614,8 @@ def q_learning_loss_single_traj(
     if expected.numel() != actions_t.numel() or not torch.equal(expected, actions_t):
         raise ValueError("Teacher-forced expected actions != sampled actions (alignment bug).")
 
-    policy_seg = logits[start_idx : start_idx + num_steps, :]  # [T, V]
-    q_selected = policy_seg.gather(-1, actions_t.unsqueeze(-1)).squeeze(-1)  # [T]
-    action_logp = action_logprobs_from_logits(policy_seg, actions_t)  # [T]
+    seg = logits[start_idx : start_idx + num_steps, :]  # [T, V]
+    q_selected = seg.gather(-1, actions_t.unsqueeze(-1)).squeeze(-1)  # [T]
 
     with torch.no_grad():
         if target_model is None:
@@ -543,7 +625,6 @@ def q_learning_loss_single_traj(
 
         target_seg = target_logits[start_idx : start_idx + num_steps, :]
         next_max = torch.zeros_like(q_selected)
-
         if num_steps > 1:
             next_max[:-1] = target_seg[1:].max(dim=-1).values
         next_max[-1] = 0.0
@@ -552,7 +633,8 @@ def q_learning_loss_single_traj(
         targets = rewards_t + gamma * next_max
 
     loss = F.mse_loss(q_selected.float(), targets.float(), reduction="mean")
-    return loss, q_selected.detach(), targets.detach(), action_logp.detach()
+    td_err = (q_selected.detach() - targets.detach()).abs().mean()
+    return loss, td_err, q_selected.detach()
 
 
 def kl_loss_action_level(
@@ -566,40 +648,14 @@ def kl_loss_action_level(
     x_ids = torch.tensor(traj_ids[:-1], dtype=torch.long, device=device).unsqueeze(0)
     logits_pi = forward_logits(policy_model, x_ids)[0]
     logits_ref = forward_logits(ref_model, x_ids)[0]
-
     start_idx = prompt_len - 1
     T = len(actions)
     actions_t = torch.tensor(actions, dtype=torch.long, device=device)
-
     seg_pi = logits_pi[start_idx : start_idx + T, :]
     seg_ref = logits_ref[start_idx : start_idx + T, :]
-
     logp_pi = action_logprobs_from_logits(seg_pi, actions_t)
     logp_ref = action_logprobs_from_logits(seg_ref, actions_t)
     return (logp_pi - logp_ref).mean()
-
-
-def kl_loss_full_vocab(
-    policy_model,
-    ref_model,
-    traj_ids: List[int],
-    prompt_len: int,
-    actions_len: int,
-    device: torch.device,
-) -> Tensor:
-    x_ids = torch.tensor(traj_ids[:-1], dtype=torch.long, device=device).unsqueeze(0)
-    logits_pi = forward_logits(policy_model, x_ids)[0]
-    logits_ref = forward_logits(ref_model, x_ids)[0]
-
-    start_idx = prompt_len - 1
-    seg_pi = logits_pi[start_idx : start_idx + actions_len, :]
-    seg_ref = logits_ref[start_idx : start_idx + actions_len, :]
-
-    return F.kl_div(
-        F.log_softmax(seg_pi, dim=-1),
-        F.softmax(seg_ref, dim=-1),
-        reduction="batchmean",
-    )
 
 
 # -------------------------
@@ -610,40 +666,36 @@ def evaluate_model(
     model,
     tokenizer,
     pairs: List[Pair],
-    stages: Sequence[Sequence[int]],
+    node_to_stage: Dict[int, int],
+    K: int,
     graph: nx.DiGraph,
     device: torch.device,
     args: argparse.Namespace,
     block_size: int,
     max_pairs: int,
+    allowed_token_mask: Optional[Tensor],
 ) -> Dict[str, Dict[str, float]]:
     model.eval()
 
-    stage_sets = {
-        "S1": set(stages[0]) if len(stages) > 0 else set(),
-        "S2": set(stages[1]) if len(stages) > 1 else set(),
-        "S3": set(stages[2]) if len(stages) > 2 else set(),
-    }
+    bucket_names = [f"S{i}->S{j}" for i in range(1, K + 1) for j in range(i + 1, K + 1)]
+    buckets: Dict[BucketName, List[Pair]] = {bn: [] for bn in bucket_names}
 
-    buckets: Dict[BucketName, List[Pair]] = {"S1->S2": [], "S2->S3": [], "S1->S3": []}
     if max_pairs <= 0:
-        return {
-            "S1->S2": {"correct": 0, "total": 0, "accuracy": 0.0},
-            "S2->S3": {"correct": 0, "total": 0, "accuracy": 0.0},
-            "S1->S3": {"correct": 0, "total": 0, "accuracy": 0.0},
-            "overall": {"correct": 0, "total": 0, "accuracy": 0.0},
-        }
+        res = {bn: {"correct": 0, "total": 0, "accuracy": 0.0} for bn in bucket_names}
+        res["overall"] = {"correct": 0, "total": 0, "accuracy": 0.0}
+        return res
 
     for s, t in pairs[:max_pairs]:
-        b = bucket_for_pair(s, t, stages)
-        if b:
+        b = bucket_for_pair_k(s, t, node_to_stage=node_to_stage, K=K)
+        if b is not None:
             buckets[b].append((s, t))
 
     total_correct = 0
     total_cases = 0
     results: Dict[str, Dict[str, float]] = {}
 
-    for bname, bpairs in buckets.items():
+    for bname in bucket_names:
+        bpairs = buckets[bname]
         correct = 0
         for s, t in bpairs:
             traj = sample_trajectory_hf(
@@ -652,14 +704,14 @@ def evaluate_model(
                 source=s,
                 target=t,
                 graph=graph,
-                stages=stages,
-                stage_sets=stage_sets,
-                pair_bucket=bname,
+                node_to_stage=node_to_stage,
+                K=K,
                 args=args,
                 device=device,
                 block_size=block_size,
                 temperature=args.eval_temperature,
                 epsilon=0.0,
+                allowed_token_mask=allowed_token_mask,
             )
             if traj["success"]:
                 correct += 1
@@ -671,6 +723,7 @@ def evaluate_model(
 
     overall = total_correct / total_cases if total_cases else 0.0
     results["overall"] = {"correct": total_correct, "total": total_cases, "accuracy": overall}
+
     model.train()
     return results
 
@@ -701,20 +754,10 @@ def load_policy_model_and_ref(
     args: argparse.Namespace,
     vocab_size: int,
 ):
-    """
-    IMPORTANT:
-    If sft_dir is a PEFT adapter dir, we must ensure the *base* model's embedding/lm_head
-    shapes match the tokenizer's vocab size before calling PeftModel.from_pretrained().
-    Otherwise you'll see:
-      size mismatch for embed_tokens.weight / lm_head.weight
-    """
     torch_dtype = torch.bfloat16 if args.bf16 else (torch.float16 if args.fp16 else torch.float32)
 
     def _load_base():
-        kwargs = dict(
-            torch_dtype=torch_dtype,
-            trust_remote_code=bool(args.trust_remote_code),
-        )
+        kwargs = dict(torch_dtype=torch_dtype, trust_remote_code=bool(args.trust_remote_code))
         if args.load_in_4bit:
             kwargs["load_in_4bit"] = True
             kwargs["device_map"] = "auto"
@@ -725,29 +768,16 @@ def load_policy_model_and_ref(
     def _maybe_resize_to_tokenizer_vocab(m, name: str) -> None:
         if vocab_size is None or vocab_size <= 0:
             return
-        try:
-            cur = int(m.get_input_embeddings().weight.size(0))
-        except Exception:
-            return
+        cur = int(m.get_input_embeddings().weight.size(0))
         if cur == int(vocab_size):
             return
-
         print(f"[vocab] {name}: resizing token embeddings {cur} -> {int(vocab_size)} (to match tokenizer)")
-
-        # Note: on some 4bit setups, resize may fail; give a clear error.
-        try:
-            m.resize_token_embeddings(int(vocab_size))
-            # ensure tying stays consistent (some models need this explicitly)
-            if hasattr(m, "tie_weights"):
-                try:
-                    m.tie_weights()
-                except Exception:
-                    pass
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to resize_token_embeddings for {name} (cur={cur}, target={vocab_size}). "
-                f"If you are using --load_in_4bit, try disabling it for adapter loading. Original error: {e}"
-            )
+        m.resize_token_embeddings(int(vocab_size))
+        if hasattr(m, "tie_weights"):
+            try:
+                m.tie_weights()
+            except Exception:
+                pass
 
     sft_path = Path(sft_dir)
     has_adapter = (sft_path / "adapter_config.json").exists()
@@ -759,10 +789,7 @@ def load_policy_model_and_ref(
         _maybe_resize_to_tokenizer_vocab(base, name="base(policy)")
         policy = PeftModel.from_pretrained(base, sft_dir, is_trainable=True)
     else:
-        kwargs = dict(
-            torch_dtype=torch_dtype,
-            trust_remote_code=bool(args.trust_remote_code),
-        )
+        kwargs = dict(torch_dtype=torch_dtype, trust_remote_code=bool(args.trust_remote_code))
         if args.load_in_4bit:
             kwargs["load_in_4bit"] = True
             kwargs["device_map"] = "auto"
@@ -779,10 +806,7 @@ def load_policy_model_and_ref(
             _maybe_resize_to_tokenizer_vocab(base2, name="base(ref)")
             ref = PeftModel.from_pretrained(base2, sft_dir, is_trainable=False)
         else:
-            kwargs = dict(
-                torch_dtype=torch_dtype,
-                trust_remote_code=bool(args.trust_remote_code),
-            )
+            kwargs = dict(torch_dtype=torch_dtype, trust_remote_code=bool(args.trust_remote_code))
             if args.load_in_4bit:
                 kwargs["load_in_4bit"] = True
                 kwargs["device_map"] = "auto"
@@ -801,13 +825,13 @@ def load_policy_model_and_ref(
 # args
 # -------------------------
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser("Q-learning (HF/Qwen) for composition graphs")
+    p = argparse.ArgumentParser("Q-learning (HF/Qwen) for composition graphs (K stages) FINAL")
 
     # data & model
     p.add_argument("--data_dir", type=str, required=True)
     p.add_argument("--train_paths_per_pair", type=int, default=20)
     p.add_argument("--base_model", type=str, default="Qwen/Qwen2.5-3B")
-    p.add_argument("--sft_dir", type=str, required=True, help="SFT checkpoint dir (full model dir OR LoRA adapter dir).")
+    p.add_argument("--sft_dir", type=str, required=True)
     p.add_argument("--trust_remote_code", action="store_true")
 
     # precision / loading
@@ -829,20 +853,27 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--learning_rate", type=float, default=3e-5)
     p.add_argument("--gamma", type=float, default=0.96)
-    p.add_argument("--target_ema", type=float, default=0.0)
 
     # rollout
-    p.add_argument("--max_rollout_steps", type=int, default=32)
+    p.add_argument("--max_rollout_steps", type=int, default=16)
     p.add_argument("--rollout_top_k", type=int, default=1)
     p.add_argument("--rollout_temp_start", type=float, default=0.0)
     p.add_argument("--rollout_temp_end", type=float, default=0.0)
     p.add_argument("--temp_warmup_iters", type=int, default=0)
-    p.add_argument("--epsilon_start", type=float, default=0.04)
-    p.add_argument("--epsilon_end", type=float, default=0.01)
-    p.add_argument("--epsilon_warmup_iters", type=int, default=600)
 
-    # IMPORTANT: make epsilon meaningful even if rollout_top_k=1
-    p.add_argument("--epsilon_explore_top_k", type=int, default=20)
+    p.add_argument("--epsilon_start", type=float, default=0.02)
+    p.add_argument("--epsilon_end", type=float, default=0.005)
+    p.add_argument("--epsilon_warmup_iters", type=int, default=3000)
+    p.add_argument("--epsilon_explore_top_k", type=int, default=5)
+
+    # ACTION MASK
+    p.add_argument(
+        "--action_mask",
+        type=str,
+        default="digits_ws",
+        choices=["none", "digits_ws"],
+        help="digits_ws: allow only tokens decoding to digits/whitespace (+eos). Strongly recommended.",
+    )
 
     # invalid handling
     p.add_argument("--allow_invalid_continue", action="store_true")
@@ -853,12 +884,17 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--reward_hit_target", type=float, default=1.5)
     p.add_argument("--reward_valid_transition", type=float, default=0.1)
     p.add_argument("--reward_stage_bridge", type=float, default=0.3)
-    p.add_argument("--reward_stage_bridge_only_once", action="store_true")
+    p.add_argument("--reward_stage_bridge_only_once", action="store_true")  # kept for CLI compat; not used in this final shaping
+
     p.add_argument("--reward_invalid_transition", type=float, default=0.25)
     p.add_argument("--reward_invalid_token", type=float, default=1.0)
     p.add_argument("--reward_stop", type=float, default=-0.1)
-    p.add_argument("--penalty_stage2_detour", type=float, default=0.2)
-    p.add_argument("--penalty_stage3_detour", type=float, default=0.2)
+
+    # detour penalties (compat)
+    p.add_argument("--penalty_target_stage_detour", type=float, default=0.2)
+    p.add_argument("--penalty_stage2_detour", type=float, default=0.0)
+    p.add_argument("--penalty_stage3_detour", type=float, default=0.0)
+
     p.add_argument("--penalty_repeat_node", type=float, default=0.15)
     p.add_argument("--step_penalty", type=float, default=0.02)
 
@@ -866,18 +902,18 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--node_min", type=int, default=0)
     p.add_argument("--node_max", type=int, default=149)
 
-    # KL switch
-    p.add_argument("--kl_coef", type=float, default=0.03)
+    # KL
+    p.add_argument("--kl_coef", type=float, default=0.05)
     p.add_argument("--kl_warmup_iters", type=int, default=0)
-    p.add_argument("--kl_anneal_iters", type=int, default=1000)
-    p.add_argument("--kl_mode", choices=["action", "full"], default="action")
+    p.add_argument("--kl_anneal_iters", type=int, default=20000)
+    p.add_argument("--kl_mode", choices=["action"], default="action")
 
     # eval & save
-    p.add_argument("--eval_interval", type=int, default=500)
-    p.add_argument("--save_interval", type=int, default=500)
+    p.add_argument("--eval_interval", type=int, default=1000)
+    p.add_argument("--save_interval", type=int, default=2000)
     p.add_argument("--max_eval_pairs", type=int, default=500)
     p.add_argument("--eval_temperature", type=float, default=1e-3)
-    p.add_argument("--log_dir", type=str, default="out_ql_hf")
+    p.add_argument("--log_dir", type=str, default="out_ql_hf_final")
 
     return p.parse_args()
 
@@ -903,65 +939,44 @@ def main() -> None:
         raise FileNotFoundError(test_txt)
 
     meta_path = data_dir / "meta.pkl"
-    if not meta_path.exists():
-        raise FileNotFoundError(f"meta.pkl not found at {meta_path}")
     meta = pickle.load(open(meta_path, "rb"))
     block_size = int(meta.get("block_size", 63))
 
     # tokenizer: prefer sft_dir tokenizer if available
     sft_path = Path(args.sft_dir)
     tok_dir = sft_path if (sft_path / "tokenizer.json").exists() else (data_dir / "tokenizer")
-    if not tok_dir.exists():
-        raise FileNotFoundError(f"tokenizer dir not found: {tok_dir}")
     tokenizer = AutoTokenizer.from_pretrained(tok_dir, use_fast=True, trust_remote_code=bool(args.trust_remote_code))
     print(f"[tokenizer] loaded from {tok_dir}")
 
-    if tokenizer.eos_token_id is None:
-        raise ValueError("Tokenizer has no eos_token_id.")
-    if tokenizer.pad_token_id is None:
-        raise ValueError("Tokenizer has no pad_token_id.")
+    if tokenizer.eos_token_id is None or tokenizer.pad_token_id is None:
+        raise ValueError("Tokenizer missing eos/pad token id.")
     if tokenizer.pad_token_id == tokenizer.eos_token_id:
-        raise ValueError("pad_token_id == eos_token_id (should not happen with your prepare script).")
+        raise ValueError("pad_token_id == eos_token_id; prepare step broken.")
 
-    tokenizer_vocab_size = len(tokenizer)
-
-    stage_info_path = data_dir / "stage_info.pkl"
-    if not stage_info_path.exists():
-        raise FileNotFoundError(f"stage_info.pkl not found: {stage_info_path}")
-    stage_info = pickle.load(open(stage_info_path, "rb"))
+    stage_info = pickle.load(open(data_dir / "stage_info.pkl", "rb"))
     stages: List[List[int]] = stage_info["stages"]
+    K = len(stages)
+    node_to_stage = build_node_to_stage(stages)
+    print(f"[stages] K={K}")
 
-    stage_sets = {
-        "S1": set(stages[0]) if len(stages) > 0 else set(),
-        "S2": set(stages[1]) if len(stages) > 1 else set(),
-        "S3": set(stages[2]) if len(stages) > 2 else set(),
-    }
-
-    graph_path = data_dir / "composition_graph.graphml"
-    if not graph_path.exists():
-        raise FileNotFoundError(f"composition_graph.graphml not found: {graph_path}")
-    graph = nx.read_graphml(graph_path)
+    graph = nx.read_graphml(data_dir / "composition_graph.graphml")
 
     out_dir = prepare_output_dir(args.log_dir)
     metrics_path = out_dir / "metrics_ql.jsonl"
     print(f"[out_dir] {out_dir}")
-    print(
-        f"[meta] block_size={block_size}, eos_id={tokenizer.eos_token_id}, pad_id={tokenizer.pad_token_id}, "
-        f"tokenizer_vocab_size={tokenizer_vocab_size}"
-    )
+    print(f"[meta] block_size={block_size}, eos_id={tokenizer.eos_token_id}, pad_id={tokenizer.pad_token_id}, vocab={len(tokenizer)}")
 
     policy_model, ref_model = load_policy_model_and_ref(
         base_model=args.base_model,
         sft_dir=args.sft_dir,
         device=device,
         args=args,
-        vocab_size=tokenizer_vocab_size,
+        vocab_size=len(tokenizer),
     )
     policy_model.train()
-
     policy_model.config.pad_token_id = tokenizer.pad_token_id
     policy_model.config.eos_token_id = tokenizer.eos_token_id
-    policy_model.config.use_cache = True  # rollout will use cache; training forward sets use_cache=False explicitly
+    policy_model.config.use_cache = True
 
     if ref_model is not None:
         ref_model.config.pad_token_id = tokenizer.pad_token_id
@@ -971,9 +986,15 @@ def main() -> None:
         for p in ref_model.parameters():
             p.requires_grad = False
 
-    target_model = None
-    if args.target_ema and args.target_ema > 0:
-        raise NotImplementedError("target_ema>0 is not implemented in this minimal HF version.")
+    # ACTION MASK
+    allowed_token_mask = None
+    if args.action_mask == "digits_ws":
+        t0 = time.perf_counter()
+        allowed_token_mask = build_allowed_token_mask_digits_whitespace(tokenizer, device=device, allow_eos=True)
+        kept = int(allowed_token_mask.sum().item())
+        print(f"[action_mask] digits_ws enabled. allowed={kept}/{len(tokenizer)} tokens. build_sec={time.perf_counter()-t0:.2f}")
+    else:
+        print("[action_mask] disabled (not recommended).")
 
     trainable_params = [p for p in policy_model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(trainable_params, lr=args.learning_rate)
@@ -985,9 +1006,8 @@ def main() -> None:
         if len(parts) >= 2:
             eval_pairs.append((int(parts[0]), int(parts[1])))
 
-    print(f"[data] train unique pairs={len(train_pairs)}, eval pairs={len(eval_pairs)}")
-
-    bucket_names = ["S1->S2", "S2->S3", "S1->S3"]
+    bucket_names = [f"S{i}->S{j}" for i in range(1, K + 1) for j in range(i + 1, K + 1)]
+    print(f"[data] train unique pairs={len(train_pairs)}, eval pairs={len(eval_pairs)}, num_buckets={len(bucket_names)}")
 
     t0_all = time.perf_counter()
 
@@ -1001,43 +1021,40 @@ def main() -> None:
         batch_pairs = random.choices(train_pairs, k=args.batch_size)
 
         losses: List[Tensor] = []
-        kl_values: List[float] = []
-        td_errors: List[float] = []
+        td_list: List[float] = []
+        kl_list: List[float] = []
 
         success_count = 0
-        hit_count = 0
         invalid_edge_count = 0
         invalid_tok_count = 0
-        stage2_visit_count = 0
+        covered_all_count = 0
+        covered_ratio_list: List[float] = []
+        ep_rewards: List[float] = []
 
         bucket_success_sum = defaultdict(float)
         bucket_counts = defaultdict(int)
-        ep_rewards: List[float] = []
 
         for (s, t) in batch_pairs:
-            b = bucket_for_pair(s, t, stages)
-
             traj = sample_trajectory_hf(
                 model=policy_model,
                 tokenizer=tokenizer,
                 source=s,
                 target=t,
                 graph=graph,
-                stages=stages,
-                stage_sets=stage_sets,
-                pair_bucket=b,
+                node_to_stage=node_to_stage,
+                K=K,
                 args=args,
                 device=device,
                 block_size=block_size,
                 temperature=temperature,
                 epsilon=epsilon,
+                allowed_token_mask=allowed_token_mask,
             )
 
             prompt_len = len(traj["prompt_ids"])
-
-            qloss, q_sel, targets, _ = q_learning_loss_single_traj(
+            qloss, td_err, _ = q_learning_loss_single_traj(
                 model=policy_model,
-                target_model=target_model,
+                target_model=None,
                 traj_ids=traj["traj_ids"],
                 prompt_len=prompt_len,
                 actions=traj["actions"],
@@ -1046,46 +1063,36 @@ def main() -> None:
                 device=device,
                 gamma=args.gamma,
             )
-
             loss_i = qloss
             kl_val = 0.0
 
             if kl_coef_cur > 0.0 and ref_model is not None:
-                if args.kl_mode == "action":
-                    kl = kl_loss_action_level(
-                        policy_model=policy_model,
-                        ref_model=ref_model,
-                        traj_ids=traj["traj_ids"],
-                        prompt_len=prompt_len,
-                        actions=traj["actions"],
-                        device=device,
-                    )
-                else:
-                    kl = kl_loss_full_vocab(
-                        policy_model=policy_model,
-                        ref_model=ref_model,
-                        traj_ids=traj["traj_ids"],
-                        prompt_len=prompt_len,
-                        actions_len=len(traj["actions"]),
-                        device=device,
-                    )
+                kl = kl_loss_action_level(
+                    policy_model=policy_model,
+                    ref_model=ref_model,
+                    traj_ids=traj["traj_ids"],
+                    prompt_len=prompt_len,
+                    actions=traj["actions"],
+                    device=device,
+                )
                 loss_i = loss_i + kl_coef_cur * kl
                 kl_val = float(kl.detach().item())
 
             losses.append(loss_i)
-            kl_values.append(kl_val)
-            td_errors.append(float((q_sel - targets).abs().mean().item()))
+            td_list.append(float(td_err.item()))
+            kl_list.append(kl_val)
 
             success = bool(traj["success"])
             success_count += int(success)
-            hit_count += int(traj["hit_target"])
             invalid_edge_count += int(traj["invalid_transition"])
             invalid_tok_count += int(traj["invalid_token"])
-            stage2_visit_count += int(traj["visited_stage2"])
+            covered_all_count += int(traj["covered_all_required"])
+            covered_ratio_list.append(float(traj["covered_required_ratio"]))
 
-            if traj["bucket"]:
-                bucket_success_sum[traj["bucket"]] += 1.0 if success else 0.0
-                bucket_counts[traj["bucket"]] += 1
+            b = traj.get("bucket", None)
+            if b:
+                bucket_success_sum[b] += 1.0 if success else 0.0
+                bucket_counts[b] += 1
 
             ep_rewards.append(float(sum(traj["rewards"])) if traj["rewards"] else 0.0)
 
@@ -1103,19 +1110,20 @@ def main() -> None:
                 "iter_time_sec": float(iter_time),
                 "elapsed_min": float((time.perf_counter() - t0_all) / 60.0),
                 "loss": float(total_loss.item()),
-                "td_error": float(np.mean(td_errors)) if td_errors else 0.0,
-                "kl_loss": float(np.mean(kl_values)) if kl_values else 0.0,
+                "td_error": float(np.mean(td_list)) if td_list else 0.0,
+                "kl_loss": float(np.mean(kl_list)) if kl_list else 0.0,
                 "kl_coef_current": float(kl_coef_cur),
                 "temperature": float(temperature),
                 "epsilon": float(epsilon),
                 "epsilon_explore_top_k": int(args.epsilon_explore_top_k),
                 "rollout_top_k": int(args.rollout_top_k),
                 "success_rate": success_count / len(batch_pairs),
-                "hit_rate": hit_count / len(batch_pairs),
-                "stage2_visit_rate": stage2_visit_count / len(batch_pairs),
                 "invalid_edge_rate": invalid_edge_count / len(batch_pairs),
                 "invalid_tok_rate": invalid_tok_count / len(batch_pairs),
+                "covered_all_required_rate": covered_all_count / len(batch_pairs),
+                "covered_required_ratio_avg": float(np.mean(covered_ratio_list)) if covered_ratio_list else 0.0,
                 "avg_episode_reward": float(np.mean(ep_rewards)) if ep_rewards else 0.0,
+                "K": int(K),
             }
             for bn in bucket_names:
                 cnt = bucket_counts.get(bn, 0)
@@ -1130,12 +1138,14 @@ def main() -> None:
                 model=policy_model,
                 tokenizer=tokenizer,
                 pairs=eval_pairs,
-                stages=stages,
+                node_to_stage=node_to_stage,
+                K=K,
                 graph=graph,
                 device=device,
                 args=args,
                 block_size=block_size,
                 max_pairs=args.max_eval_pairs,
+                allowed_token_mask=allowed_token_mask,
             )
             eval_record = {"iter": iteration, "eval": eval_res}
             print(json.dumps(eval_record, ensure_ascii=False))
