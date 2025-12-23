@@ -1,0 +1,63 @@
+{
+  "k_stages": 5,
+  "train_file": "train_20.txt",
+  "max_jump": 1,
+  "keep_intra_stage": false,
+  "keep_unknown_stage": false,
+  "seed": 2025,
+  "counts": {
+    "original": {
+      "pairs_total": 7738,
+      "paths_total": 155836,
+      "pairs_by_type": {
+        "S1->S5": 765,
+        "S2->S3": 774,
+        "S3->S5": 765,
+        "S1->S2": 803,
+        "S4->S5": 793,
+        "S1->S3": 765,
+        "S2->S4": 765,
+        "S3->S4": 778,
+        "S2->S5": 765,
+        "S1->S4": 765
+      },
+      "paths_by_type": {
+        "S1->S5": 15300,
+        "S2->S3": 15743,
+        "S3->S5": 15300,
+        "S1->S2": 16342,
+        "S4->S5": 16108,
+        "S1->S3": 15300,
+        "S2->S4": 15300,
+        "S3->S4": 15843,
+        "S2->S5": 15300,
+        "S1->S4": 15300
+      }
+    },
+    "kept": {
+      "pairs_total": 3148,
+      "paths_total": 64036,
+      "pairs_by_type": {
+        "S2->S3": 774,
+        "S1->S2": 803,
+        "S4->S5": 793,
+        "S3->S4": 778
+      },
+      "paths_by_type": {
+        "S2->S3": 15743,
+        "S1->S2": 16342,
+        "S4->S5": 16108,
+        "S3->S4": 15843
+      }
+    },
+    "dropped": {
+      "pairs_total": 4590,
+      "paths_total": 91800
+    }
+  },
+  "ratios": {
+    "kept_pairs_ratio": 0.40682346859653656,
+    "kept_paths_ratio": 0.41091917143663853
+  },
+  "pair_report": null
+}

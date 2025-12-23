@@ -1,0 +1,55 @@
+{
+  "k_stages": 5,
+  "train_samples": 155836,
+  "test_samples": 1179,
+  "train_paths_per_pair": 20,
+  "eval_paths_per_pair": 1,
+  "train_ratio": 0.85,
+  "seed": 42,
+  "include_intra_stage_pairs": false,
+  "allow_unknown_stage_nodes": false,
+  "pair_counts_by_type": {
+    "S1->S4": 900,
+    "S1->S5": 900,
+    "S1->S3": 900,
+    "S1->S2": 896,
+    "S2->S4": 900,
+    "S2->S5": 900,
+    "S2->S3": 865,
+    "S3->S4": 866,
+    "S3->S5": 900,
+    "S4->S5": 890
+  },
+  "pair_split_counts": {
+    "train_pairs": 7738,
+    "test_pairs": 1179
+  },
+  "sample_counts_by_type": {
+    "train": {
+      "S1->S4": 15300,
+      "__total__": 155836,
+      "S1->S5": 15300,
+      "S1->S3": 15300,
+      "S1->S2": 16342,
+      "S2->S4": 15300,
+      "S2->S5": 15300,
+      "S2->S3": 15743,
+      "S3->S4": 15843,
+      "S3->S5": 15300,
+      "S4->S5": 16108
+    },
+    "test": {
+      "S1->S4": 135,
+      "__total__": 1179,
+      "S1->S5": 135,
+      "S1->S3": 135,
+      "S1->S2": 93,
+      "S2->S4": 135,
+      "S2->S5": 135,
+      "S2->S3": 91,
+      "S3->S4": 88,
+      "S3->S5": 135,
+      "S4->S5": 97
+    }
+  }
+}
