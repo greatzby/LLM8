@@ -19,7 +19,7 @@ def load_pairs_unique(path: Path):
     return pairs
 
 def main():
-    stage_info_path = DATA_DIR / f"stage_info_{K}.json"
+    stage_info_path = DATA_DIR / f"stage_info.pkl"
     train_path = DATA_DIR / f"train_{K}.txt"
     test_path = DATA_DIR / "test.txt"
 
