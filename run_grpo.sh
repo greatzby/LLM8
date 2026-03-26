@@ -71,7 +71,7 @@ for k in 0 1; do
       --data_dir "${DATA_DIRS[$i]}" \
       --sft_checkpoint "${SFT_CKPTS[$i]}" \
       --kl_coef "${kl_coef}" \
-      --log_dir "out_nano_grpo_shaping_${kl_tag}_seed${seed}" \
+      --log_dir "out_nano_grpo2_shaping_${kl_tag}_seed${seed}" \
       ${COMMON_ARGS}
 
     echo "----- [${RUN}/${TOTAL}] done -----"
