@@ -8,6 +8,13 @@ GRPO (Group Relative Policy Optimization) fine-tuning script for GraphA datasets
   2. 使用 PPO-style clipped surrogate 目标更新策略，而非 TD + MSE。
   3. 不再需要 target network / gamma / TD error。
   4. 保留 KL 正则、温度/ε 调度、过程奖励等全部基础设施。
+
+修复记录（相对原始版本）：
+  [FIX-1] rollout_top_k 默认改为 0，确保采样随机性 → 组内轨迹有差异。
+  [FIX-2] KL 正则改为 full-distribution KL (F.kl_div)，与 Q-learning 一致，
+          消除"负 KL 正反馈崩溃"问题。
+  [FIX-3] 区分真实采样 action 与脚本强制追加的 stop token，
+          policy loss / KL 仅针对模型真正选择的动作。
 """
 
 from __future__ import annotations
@@ -80,15 +87,16 @@ def parse_args() -> argparse.Namespace:
                         help="（GRPO 不使用，保留兼容）")
 
     parser.add_argument("--max_rollout_steps", type=int, default=32)
-    parser.add_argument("--rollout_top_k", type=int, default=1,
-                        help="rollout 采样时的 top-k；默认 1 搭配温度调度使用。")
+    # [FIX-1] 默认从 1 改为 0，top_k=0 表示不做截断，保留完整分布采样
+    parser.add_argument("--rollout_top_k", type=int, default=0,
+                        help="rollout 采样时的 top-k；0 表示不截断（推荐 GRPO 使用 0）。")
 
     # rollout 温度调度
     parser.add_argument("--rollout_temperature", type=float, default=None,
                         help="若设置此参数，则温度固定为该值（兼容旧脚本）。")
-    parser.add_argument("--rollout_temp_start", type=float, default=0.0)
-    parser.add_argument("--rollout_temp_end", type=float, default=1.0)
-    parser.add_argument("--temp_warmup_iters", type=int, default=8000)
+    parser.add_argument("--rollout_temp_start", type=float, default=0.8)
+    parser.add_argument("--rollout_temp_end", type=float, default=0.8)
+    parser.add_argument("--temp_warmup_iters", type=int, default=0)
 
     # ε-greedy 调度
     parser.add_argument("--epsilon_start", type=float, default=0.0)
@@ -398,38 +406,44 @@ def evaluate_model(model: GPT,
 
 
 # ---------------------------------------------------------------------------
-# GRPO 核心：序列 log-prob 计算
+# [FIX-2] [FIX-3] GRPO 核心：同时返回 log-prob 和完整 logits
 # ---------------------------------------------------------------------------
-def compute_sequence_logprobs(model: GPT,
-                              traj_ids: List[int],
-                              action_start: int,
-                              device: torch.device) -> Tensor:
+def compute_action_outputs(model: GPT,
+                           traj_ids: List[int],
+                           action_start: int,
+                           num_actions: int,
+                           device: torch.device) -> Tuple[Tensor, Tensor]:
     """
-    返回 traj_ids[action_start:] 中每个 token 在模型下的 log π(a_t | context)。
-    返回 shape = (num_actions,)，保留梯度（除非外部包了 no_grad）。
+    对 traj_ids 中从 action_start 开始的前 num_actions 个 action token，
+    返回：
+      logprobs     : (num_actions,)            — log π(a_t | context)
+      action_logits: (num_actions, vocab_size)  — 完整 logit 分布
     """
-    num_actions = len(traj_ids) - action_start
     if num_actions <= 0:
-        return torch.tensor([], device=device, dtype=torch.float32)
+        empty_lp = torch.tensor([], device=device, dtype=torch.float32)
+        empty_logits = torch.zeros(0, 1, device=device)
+        return empty_lp, empty_logits
 
     x = torch.tensor(traj_ids[:-1], dtype=torch.long, device=device).unsqueeze(0)
     y = torch.tensor(traj_ids[1:], dtype=torch.long, device=device).unsqueeze(0)
     logits, _ = model(x, y)
-    logits = logits.squeeze(0)                       # (seq_len, vocab)
+    logits = logits.squeeze(0)  # (seq_len, vocab_size)
 
-    start_idx = action_start - 1                     # logits[start_idx] 预测第一个 action
+    start_idx = action_start - 1  # logits[start_idx] 预测第一个 action
     action_logits = logits[start_idx:start_idx + num_actions]
-    log_probs = F.log_softmax(action_logits, dim=-1)
 
+    log_probs = F.log_softmax(action_logits, dim=-1)
     action_ids = torch.tensor(
         traj_ids[action_start:action_start + num_actions],
         dtype=torch.long, device=device,
     )
-    return log_probs.gather(-1, action_ids.unsqueeze(-1)).squeeze(-1)
+    selected_logprobs = log_probs.gather(-1, action_ids.unsqueeze(-1)).squeeze(-1)
+
+    return selected_logprobs, action_logits
 
 
 # ---------------------------------------------------------------------------
-# Rollout 相关（与 Q-learning 版完全一致）
+# Rollout 相关
 # ---------------------------------------------------------------------------
 def select_next_token(logits: Tensor,
                       temperature: float,
@@ -623,13 +637,23 @@ def sample_trajectory(model: GPT,
     if model_was_training:
         model.train()
 
+    # [FIX-3] 记录模型真正采样的 action 数量（不含脚本强制追加的 stop）
+    num_real_sampled = len(sampled_ids)
+    forced_stop = False
+
     if not sampled_ids or sampled_ids[-1] != stop_token_id:
+        forced_stop = True
         sampled_ids.append(stop_token_id)
         extra_reward = (-args.step_penalty if args.step_penalty != 0.0 else 0.0) + args.reward_stop
         rewards.append(float(extra_reward))
         dones.append(True)
 
     traj_ids = build_traj_ids(prompt_ids, sampled_ids, stop_token_id, block_size)
+
+    # [FIX-3] 安全限制：不超过 traj_ids 中实际的 action 数
+    actual_actions_in_traj = len(traj_ids) - len(prompt_ids)
+    num_sampled_actions = min(num_real_sampled, actual_actions_in_traj)
+
     decoded_tokens = decode_tokens(sampled_ids, itos, stop_token_id)
     generated_nodes = tokens_to_nodes(decoded_tokens)
     full_path_nodes = assemble_full_path(source, generated_nodes)
@@ -675,6 +699,9 @@ def sample_trajectory(model: GPT,
         "valid_transition_steps": valid_transition_steps,
         "invalid_transition_steps": invalid_transition_steps,
         "bucket": pair_bucket,
+        # [FIX-3] 新增字段
+        "num_sampled_actions": num_sampled_actions,
+        "forced_stop": forced_stop,
     }
 
 
@@ -725,7 +752,14 @@ def main() -> None:
     for i, s in enumerate(stages):
         logger.info("  Stage S%d: %d nodes", i + 1, len(s))
 
-    # 兼容性提示
+    # [FIX-1] 采样参数健全性检查
+    if args.rollout_top_k == 1 and args.rollout_temp_start < 0.1 and args.epsilon_start < 0.01:
+        logger.warning(
+            "采样参数可能导致组内轨迹完全相同（top_k=%d, temp_start=%.3f, eps_start=%.3f）。"
+            "GRPO 需要组内差异才能产生梯度。建议 --rollout_top_k 0 --rollout_temp_start 0.5+。",
+            args.rollout_top_k, args.rollout_temp_start, args.epsilon_start,
+        )
+
     if args.gamma != 1.0:
         logger.info("注意：--gamma=%.4f 在 GRPO 中不使用（保留兼容）。", args.gamma)
     if args.target_ema != 0.0 or args.target_sync_interval != 0:
@@ -774,7 +808,6 @@ def main() -> None:
 
     ckpt_block_size = ckpt_model_args.get("block_size", dataset_block_size)
 
-    # ---- 策略模型 ----
     model = GPT(GPTConfig(**model_args)).to(device)
     load_state_dict_with_block_resize(
         model=model,
@@ -783,7 +816,6 @@ def main() -> None:
         logger=logger,
     )
 
-    # ---- SFT 参考模型（用于 KL 正则） ----
     if args.kl_coef > 0.0:
         sft_ref_model = GPT(GPTConfig(**model_args)).to(device)
         load_state_dict_with_block_resize(
@@ -888,15 +920,16 @@ def main() -> None:
                     epsilon=epsilon,
                 )
 
-                num_act = len(traj_info["traj_ids"]) - action_start
-                if num_act > 0:
+                # [FIX-3] 仅对真实采样的 action 计算 old log-probs
+                num_sampled = traj_info["num_sampled_actions"]
+                if num_sampled > 0:
                     with torch.no_grad():
-                        old_lp = compute_sequence_logprobs(
-                            model, traj_info["traj_ids"], action_start, device)
+                        old_lp, _ = compute_action_outputs(
+                            model, traj_info["traj_ids"],
+                            action_start, num_sampled, device)
                 else:
                     old_lp = torch.tensor([], device=device, dtype=torch.float32)
                 traj_info["old_logprobs"] = old_lp
-                traj_info["num_actions"] = num_act
 
                 group.append(traj_info)
                 all_trajs.append(traj_info)
@@ -922,7 +955,6 @@ def main() -> None:
         ratio_list: List[float] = []
         clip_fractions: List[float] = []
 
-        # 收集统计信息
         episode_rewards: List[float] = []
         step_rewards: List[float] = []
         path_lengths: List[int] = []
@@ -946,7 +978,6 @@ def main() -> None:
             group_reward_stds.append(float(np.std(ep_rews)))
 
         for traj in all_trajs:
-            # 统计
             episode_rewards.append(traj["episode_reward"])
             step_rewards.append(traj["step_reward_mean"])
             path_lengths.append(len(traj["path_nodes"]))
@@ -967,24 +998,25 @@ def main() -> None:
                 bucket_success_sum[bname] += 1.0 if succ else 0.0
                 bucket_counts[bname] += 1
 
-            # GRPO 策略损失
-            num_act = traj["num_actions"]
+            # [FIX-3] 仅对真实采样的 action 计算策略损失
+            num_act = traj["num_sampled_actions"]
             advantage = traj["advantage"]
             advantages_abs.append(abs(advantage))
 
             if num_act <= 0:
                 continue
 
-            new_logprobs = compute_sequence_logprobs(
-                model, traj["traj_ids"], action_start, device)
+            # 计算 new log-probs 和 logits（带梯度）
+            new_logprobs, new_logits = compute_action_outputs(
+                model, traj["traj_ids"], action_start, num_act, device)
             old_logprobs = traj["old_logprobs"].detach()
 
-            # 安全截断对齐
             act_len = min(new_logprobs.size(0), old_logprobs.size(0))
             if act_len <= 0:
                 continue
             new_logprobs = new_logprobs[:act_len]
             old_logprobs = old_logprobs[:act_len]
+            new_logits = new_logits[:act_len]
 
             ratio = torch.exp(new_logprobs - old_logprobs)
             adv = torch.tensor(advantage, dtype=torch.float32, device=device)
@@ -999,14 +1031,19 @@ def main() -> None:
                 clipped = ((ratio < 1.0 - args.clip_eps) | (ratio > 1.0 + args.clip_eps)).float()
                 clip_fractions.append(float(clipped.mean().item()))
 
-            # KL 正则
+            # [FIX-2] KL 正则：使用 full-distribution KL，与 Q-learning 完全一致
             if kl_coef_now > 0 and sft_ref_model is not None:
                 with torch.no_grad():
-                    ref_logprobs = compute_sequence_logprobs(
-                        sft_ref_model, traj["traj_ids"], action_start, device)
-                    ref_logprobs = ref_logprobs[:act_len]
-                kl_per_token = new_logprobs - ref_logprobs
-                kl_losses_list.append(kl_per_token.mean())
+                    _, ref_logits = compute_action_outputs(
+                        sft_ref_model, traj["traj_ids"],
+                        action_start, act_len, device)
+
+                kl_loss = F.kl_div(
+                    F.log_softmax(new_logits, dim=-1),
+                    F.softmax(ref_logits, dim=-1),
+                    reduction="batchmean",
+                )
+                kl_losses_list.append(kl_loss)
 
         # ------ 反向传播 ------
         if not policy_losses:
