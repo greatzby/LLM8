@@ -2,17 +2,21 @@
 # -*- coding: utf-8 -*-
 """
 Q-Learning fine-tuning for GraphA / GraphNano datasets, with support for
-instruction-style prompts produced by textualization.
+the final instruction-style no-step-hints prompt.
+
+Recommended prompt:
+  instruction find a valid path from node {s} to node {t} output only the path answer {s}
 
 What this script does:
   1. If instruction_template.json or meta.pkl contains prompt_template_tokens,
      it builds prompts using that instruction template.
   2. For pair loading / exact eval, it prefers raw numeric files:
        train_raw_{K}.txt and test_raw.txt
-     and falls back to train_{K}.txt / test.txt if raw files are absent.
+     but can also parse textualized files if raw copies are absent.
   3. Dynamic prompt length: action_start and max_new_tokens are computed per pair.
-  4. Success criterion is unchanged from the original evaluator:
-     valid edges + composition pairs must touch all intermediate stages.
+  4. Periodic evaluation is strict:
+     any non-numeric token generated before newline makes the sample incorrect.
+  5. Training rollout / reward logic is otherwise unchanged.
 """
 
 from __future__ import annotations
@@ -48,12 +52,24 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Q-learning fine-tuning with instruction-style prompt support."
     )
-    parser.add_argument("--data_dir", type=str, required=True,
-                        help="Dataset directory containing meta.pkl, stage_info.pkl, graph, etc.")
-    parser.add_argument("--sft_checkpoint", type=str, required=True,
-                        help="SFT checkpoint (.pt) used for initialization and KL reference.")
-    parser.add_argument("--train_paths_per_pair", type=int, default=20,
-                        help="Matches train_{K}.txt / train_raw_{K}.txt.")
+    parser.add_argument(
+        "--data_dir",
+        type=str,
+        required=True,
+        help="Dataset directory containing meta.pkl, stage_info.pkl, graph, etc.",
+    )
+    parser.add_argument(
+        "--sft_checkpoint",
+        type=str,
+        required=True,
+        help="SFT checkpoint (.pt) used for initialization and KL reference.",
+    )
+    parser.add_argument(
+        "--train_paths_per_pair",
+        type=int,
+        default=20,
+        help="Matches train_{K}.txt / train_raw_{K}.txt.",
+    )
 
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--seed", type=int, default=42)
@@ -64,8 +80,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--n_embd", type=int, default=None)
     parser.add_argument("--dropout", type=float, default=None)
     parser.add_argument("--bias", type=str, choices=["true", "false"], default=None)
-    parser.add_argument("--block_size_override", type=int, default=None,
-                        help="Only allows shrinking block_size; expansion is forbidden.")
+    parser.add_argument(
+        "--block_size_override",
+        type=int,
+        default=None,
+        help="Only allows shrinking block_size; expansion is forbidden.",
+    )
 
     # Q-learning hyperparams
     parser.add_argument("--max_iters", type=int, default=20000)
@@ -75,12 +95,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gamma", type=float, default=1.0)
 
     parser.add_argument("--max_rollout_steps", type=int, default=32)
-    parser.add_argument("--rollout_top_k", type=int, default=1,
-                        help="top-k for rollout sampling. Often 1 is stable.")
+    parser.add_argument(
+        "--rollout_top_k",
+        type=int,
+        default=1,
+        help="top-k for rollout sampling. Often 1 is stable.",
+    )
 
     # rollout temperature schedule
-    parser.add_argument("--rollout_temperature", type=float, default=None,
-                        help="If provided, overrides the schedule with a fixed temperature.")
+    parser.add_argument(
+        "--rollout_temperature",
+        type=float,
+        default=None,
+        help="If provided, overrides the schedule with a fixed temperature.",
+    )
     parser.add_argument("--rollout_temp_start", type=float, default=0.0)
     parser.add_argument("--rollout_temp_end", type=float, default=1.0)
     parser.add_argument("--temp_warmup_iters", type=int, default=8000)
@@ -91,10 +119,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epsilon_warmup_iters", type=int, default=0)
 
     # invalid transition handling
-    parser.add_argument("--allow_invalid_continue", action="store_true",
-                        help="Allow continuing after invalid edges.")
-    parser.add_argument("--max_invalid_transitions", type=int, default=2,
-                        help="Max invalid transitions before forced termination.")
+    parser.add_argument(
+        "--allow_invalid_continue",
+        action="store_true",
+        help="Allow continuing after invalid edges.",
+    )
+    parser.add_argument(
+        "--max_invalid_transitions",
+        type=int,
+        default=2,
+        help="Max invalid transitions before forced termination.",
+    )
 
     # reward shaping
     parser.add_argument("--reward_type", choices=["process", "outcome"], default="process")
@@ -102,14 +137,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reward_valid_transition", type=float, default=0.1)
     parser.add_argument("--reward_stage_bridge", type=float, default=0.2)
 
-    parser.add_argument("--reward_stage_bridge_only_once",
-                        dest="reward_stage_bridge_only_once",
-                        action="store_true",
-                        help="Reward reaching intermediate stage only once (default: True).")
-    parser.add_argument("--reward_stage_bridge_multiple",
-                        dest="reward_stage_bridge_only_once",
-                        action="store_false",
-                        help="Allow repeated intermediate-stage bridge rewards.")
+    parser.add_argument(
+        "--reward_stage_bridge_only_once",
+        dest="reward_stage_bridge_only_once",
+        action="store_true",
+        help="Reward reaching intermediate stage only once (default: True).",
+    )
+    parser.add_argument(
+        "--reward_stage_bridge_multiple",
+        dest="reward_stage_bridge_only_once",
+        action="store_false",
+        help="Allow repeated intermediate-stage bridge rewards.",
+    )
     parser.set_defaults(reward_stage_bridge_only_once=True)
 
     parser.add_argument("--reward_invalid_transition", type=float, default=0.25)
@@ -121,10 +160,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--step_penalty", type=float, default=0.0)
 
     # target network
-    parser.add_argument("--target_ema", type=float, default=0.995,
-                        help="EMA coefficient for target network. 0 disables EMA.")
-    parser.add_argument("--target_sync_interval", type=int, default=0,
-                        help="Hard sync target network every N steps when EMA=0.")
+    parser.add_argument(
+        "--target_ema",
+        type=float,
+        default=0.995,
+        help="EMA coefficient for target network. 0 disables EMA.",
+    )
+    parser.add_argument(
+        "--target_sync_interval",
+        type=int,
+        default=0,
+        help="Hard sync target network every N steps when EMA=0.",
+    )
 
     # KL regularization toward SFT
     parser.add_argument("--kl_coef", type=float, default=0.05)
@@ -219,9 +266,11 @@ def load_prompt_template(data_dir: Path, meta: dict) -> Optional[List[str]]:
     return None
 
 
-def format_prompt_tokens(prompt_template_tokens: Optional[List[str]],
-                         source: int,
-                         target: int) -> List[str]:
+def format_prompt_tokens(
+    prompt_template_tokens: Optional[List[str]],
+    source: int,
+    target: int,
+) -> List[str]:
     if not prompt_template_tokens:
         # symbolic fallback
         return [str(source), str(target), str(source)]
@@ -237,29 +286,89 @@ def format_prompt_tokens(prompt_template_tokens: Optional[List[str]],
     return out
 
 
-def build_prompt(source: int,
-                 target: int,
-                 stoi: Dict[str, int],
-                 prompt_template_tokens: Optional[List[str]] = None) -> List[int]:
+def build_prompt(
+    source: int,
+    target: int,
+    stoi: Dict[str, int],
+    prompt_template_tokens: Optional[List[str]] = None,
+) -> List[int]:
     prompt_tokens = format_prompt_tokens(prompt_template_tokens, source, target)
     missing = [tok for tok in prompt_tokens if tok not in stoi]
     if missing:
         raise KeyError(
             "Prompt tokens missing from vocabulary: "
-            f"{missing}. Check prepare_composition_promptaware.py and instruction_template.json."
+            f"{missing}. Check textualization + rebuilt meta.pkl / bins."
         )
     return [stoi[tok] for tok in prompt_tokens]
 
 
-def decode_tokens(token_ids: Sequence[int],
-                  itos: Dict[int, str],
-                  stop_token_id: int) -> List[str]:
+def first_slot_index(template_tokens: Optional[List[str]], slot: str) -> Optional[int]:
+    if not template_tokens:
+        return None
+    for idx, tok in enumerate(template_tokens):
+        if tok == slot:
+            return idx
+    return None
+
+
+def parse_pair_from_line(
+    line: str,
+    prompt_template_tokens: Optional[List[str]],
+) -> Tuple[int, int]:
+    parts = line.strip().split()
+    if len(parts) < 2:
+        raise ValueError(f"Cannot parse pair from short line: {line}")
+
+    # Raw numeric format
+    if parts[0].isdigit() and parts[1].isdigit():
+        return int(parts[0]), int(parts[1])
+
+    # Textualized format
+    s_idx = first_slot_index(prompt_template_tokens, "{s}")
+    t_idx = first_slot_index(prompt_template_tokens, "{t}")
+    if s_idx is None or t_idx is None:
+        raise ValueError(
+            "Could not parse textualized pair because prompt_template_tokens are unavailable."
+        )
+
+    needed = max(s_idx, t_idx)
+    if len(parts) <= needed:
+        raise ValueError(
+            f"Line too short to recover source/target from template positions: {line}"
+        )
+
+    s_tok = parts[s_idx]
+    t_tok = parts[t_idx]
+    if not s_tok.isdigit() or not t_tok.isdigit():
+        raise ValueError(
+            f"Template-based pair parsing failed; source/target are not digits. line={line}"
+        )
+
+    return int(s_tok), int(t_tok)
+
+
+def decode_tokens(
+    token_ids: Sequence[int],
+    itos: Dict[int, str],
+    stop_token_id: int,
+) -> List[str]:
     tokens: List[str] = []
     for tid in token_ids:
         if tid == stop_token_id:
             break
         tokens.append(itos.get(int(tid), "[UNK]"))
     return tokens
+
+
+def decode_numeric_tokens_strict(
+    token_ids: Sequence[int],
+    itos: Dict[int, str],
+    stop_token_id: int,
+) -> Tuple[Optional[List[int]], List[str]]:
+    decoded = decode_tokens(token_ids, itos, stop_token_id)
+    if any(not tok.isdigit() for tok in decoded):
+        return None, decoded
+    return [int(tok) for tok in decoded], decoded
 
 
 def tokens_to_nodes(tokens: Sequence[str]) -> List[int]:
@@ -270,16 +379,17 @@ def tokens_to_nodes(tokens: Sequence[str]) -> List[int]:
     return nodes
 
 
-def assemble_full_path(source: int,
-                       generated_nodes: Sequence[int]) -> List[int]:
+def assemble_full_path(source: int, generated_nodes: Sequence[int]) -> List[int]:
     full_path = [source]
     full_path.extend(generated_nodes)
     return full_path
 
 
-def bucket_for_pair(source: int,
-                    target: int,
-                    node_to_stage: Dict[int, int]) -> Optional[BucketName]:
+def bucket_for_pair(
+    source: int,
+    target: int,
+    node_to_stage: Dict[int, int],
+) -> Optional[BucketName]:
     src_stage = node_to_stage.get(source)
     tgt_stage = node_to_stage.get(target)
     if src_stage is not None and tgt_stage is not None and src_stage != tgt_stage:
@@ -287,12 +397,14 @@ def bucket_for_pair(source: int,
     return None
 
 
-def is_valid_path(path_nodes: List[int],
-                  source: int,
-                  target: int,
-                  node_to_stage: Dict[int, int],
-                  stage_sets_list: List[set],
-                  graph: nx.DiGraph) -> bool:
+def is_valid_path(
+    path_nodes: List[int],
+    source: int,
+    target: int,
+    node_to_stage: Dict[int, int],
+    stage_sets_list: List[set],
+    graph: nx.DiGraph,
+) -> bool:
     if len(path_nodes) < 2:
         return False
     if path_nodes[0] != source or path_nodes[-1] != target:
@@ -315,15 +427,18 @@ def is_valid_path(path_nodes: List[int],
     return True
 
 
-def load_pairs(pair_file: Path) -> List[Pair]:
+def load_pairs(
+    pair_file: Path,
+    prompt_template_tokens: Optional[List[str]] = None,
+) -> List[Pair]:
     seen: set[Pair] = set()
     pairs: List[Pair] = []
     with open(pair_file, "r", encoding="utf-8") as f:
         for line in f:
-            parts = line.strip().split()
-            if len(parts) < 2:
+            raw = line.strip()
+            if not raw:
                 continue
-            s, t = int(parts[0]), int(parts[1])
+            s, t = parse_pair_from_line(raw, prompt_template_tokens)
             key = (s, t)
             if key not in seen:
                 seen.add(key)
@@ -338,9 +453,7 @@ def prepare_output_dir(base_dir: str) -> Path:
     return out_dir
 
 
-def safe_max_new_tokens(block_size: int,
-                        prompt_len: int,
-                        desired: int) -> int:
+def safe_max_new_tokens(block_size: int, prompt_len: int, desired: int) -> int:
     available = block_size - prompt_len - 1
     if available <= 0:
         raise ValueError(
@@ -350,10 +463,12 @@ def safe_max_new_tokens(block_size: int,
     return max(1, min(desired, available))
 
 
-def load_state_dict_with_block_resize(model: GPT,
-                                      raw_state_dict: Dict[str, Tensor],
-                                      ckpt_block_size: int,
-                                      logger) -> None:
+def load_state_dict_with_block_resize(
+    model: GPT,
+    raw_state_dict: Dict[str, Tensor],
+    ckpt_block_size: int,
+    logger,
+) -> None:
     state_dict = dict(raw_state_dict)
     model_block_size = model.config.block_size
     if ckpt_block_size is None:
@@ -371,7 +486,8 @@ def load_state_dict_with_block_resize(model: GPT,
     logger.warning(
         "Expanding block_size: checkpoint=%d -> current model=%d. "
         "New positional rows are randomly initialized.",
-        ckpt_block_size, model_block_size,
+        ckpt_block_size,
+        model_block_size,
     )
 
     wpe_key = "transformer.wpe.weight"
@@ -405,19 +521,21 @@ def load_state_dict_with_block_resize(model: GPT,
 # Evaluation
 # -----------------------------------------------------------------------------
 @torch.no_grad()
-def evaluate_model(model: GPT,
-                   pairs: List[Pair],
-                   node_to_stage: Dict[int, int],
-                   stage_sets_list: List[set],
-                   stoi: Dict[str, int],
-                   itos: Dict[int, str],
-                   graph: nx.DiGraph,
-                   device: torch.device,
-                   temperature: float,
-                   top_k: int,
-                   max_steps: int,
-                   prompt_template_tokens: Optional[List[str]] = None,
-                   max_pairs: int = 5000) -> Dict[str, Dict[str, float]]:
+def evaluate_model(
+    model: GPT,
+    pairs: List[Pair],
+    node_to_stage: Dict[int, int],
+    stage_sets_list: List[set],
+    stoi: Dict[str, int],
+    itos: Dict[int, str],
+    graph: nx.DiGraph,
+    device: torch.device,
+    temperature: float,
+    top_k: int,
+    max_steps: int,
+    prompt_template_tokens: Optional[List[str]] = None,
+    max_pairs: int = 5000,
+) -> Dict[str, Dict[str, float]]:
     model.eval()
     stop_token_id = stoi["\n"]
     block_size = model.config.block_size
@@ -447,11 +565,19 @@ def evaluate_model(model: GPT,
             )[0].tolist()
 
             new_tokens = generated[len(prompt_ids):]
-            decoded_tokens = decode_tokens(new_tokens, itos, stop_token_id)
-            generated_nodes = tokens_to_nodes(decoded_tokens)
-            full_path = assemble_full_path(source, generated_nodes)
+            generated_nodes, _decoded_tokens = decode_numeric_tokens_strict(
+                new_tokens,
+                itos,
+                stop_token_id,
+            )
 
-            if is_valid_path(full_path, source, target, node_to_stage, stage_sets_list, graph):
+            full_path = [source]
+            if generated_nodes is not None:
+                full_path = assemble_full_path(source, generated_nodes)
+
+            if generated_nodes is not None and is_valid_path(
+                full_path, source, target, node_to_stage, stage_sets_list, graph
+            ):
                 correct += 1
 
         total_correct += correct
@@ -477,9 +603,11 @@ def evaluate_model(model: GPT,
 # -----------------------------------------------------------------------------
 # Q-learning core
 # -----------------------------------------------------------------------------
-def forward_logits_and_actions(model: GPT,
-                               traj_ids: List[int],
-                               device: torch.device) -> Tuple[Tensor, Tensor]:
+def forward_logits_and_actions(
+    model: GPT,
+    traj_ids: List[int],
+    device: torch.device,
+) -> Tuple[Tensor, Tensor]:
     if len(traj_ids) < 2:
         raise ValueError("Trajectory too short to compute logits.")
     x_ids = torch.tensor(traj_ids[:-1], dtype=torch.long, device=device).unsqueeze(0)
@@ -488,16 +616,18 @@ def forward_logits_and_actions(model: GPT,
     return logits.squeeze(0), y_ids.squeeze(0)
 
 
-def compute_q_learning_loss(model: GPT,
-                            target_model: Optional[GPT],
-                            traj_ids: List[int],
-                            actions: List[int],
-                            rewards: List[float],
-                            dones: List[bool],
-                            action_start: int,
-                            device: torch.device,
-                            gamma: float,
-                            return_logits: bool = False) -> Optional[Dict[str, Tensor]]:
+def compute_q_learning_loss(
+    model: GPT,
+    target_model: Optional[GPT],
+    traj_ids: List[int],
+    actions: List[int],
+    rewards: List[float],
+    dones: List[bool],
+    action_start: int,
+    device: torch.device,
+    gamma: float,
+    return_logits: bool = False,
+) -> Optional[Dict[str, Tensor]]:
     if len(actions) == 0:
         return None
 
@@ -549,10 +679,12 @@ def compute_q_learning_loss(model: GPT,
     return result
 
 
-def select_next_token(logits: Tensor,
-                      temperature: float,
-                      top_k: int,
-                      epsilon: float) -> int:
+def select_next_token(
+    logits: Tensor,
+    temperature: float,
+    top_k: int,
+    epsilon: float,
+) -> int:
     logits = logits.detach().clone()
     vocab_size = logits.size(-1)
     topk_indices = None
@@ -579,10 +711,12 @@ def select_next_token(logits: Tensor,
     return int(next_token.item())
 
 
-def build_traj_ids(prompt_ids: List[int],
-                   sampled_ids: List[int],
-                   stop_token_id: int,
-                   block_size: int) -> List[int]:
+def build_traj_ids(
+    prompt_ids: List[int],
+    sampled_ids: List[int],
+    stop_token_id: int,
+    block_size: int,
+) -> List[int]:
     traj = prompt_ids + sampled_ids
     if len(traj) >= block_size:
         traj = traj[:block_size - 1]
@@ -592,22 +726,24 @@ def build_traj_ids(prompt_ids: List[int],
     return traj
 
 
-def sample_trajectory(model: GPT,
-                      source: int,
-                      target: int,
-                      prompt_ids: List[int],
-                      max_new_tokens: int,
-                      args: argparse.Namespace,
-                      itos: Dict[int, str],
-                      graph: nx.DiGraph,
-                      node_to_stage: Dict[int, int],
-                      stage_sets_list: List[set],
-                      pair_bucket: Optional[str],
-                      stop_token_id: int,
-                      device: torch.device,
-                      block_size: int,
-                      temperature: float,
-                      epsilon: float) -> Dict[str, object]:
+def sample_trajectory(
+    model: GPT,
+    source: int,
+    target: int,
+    prompt_ids: List[int],
+    max_new_tokens: int,
+    args: argparse.Namespace,
+    itos: Dict[int, str],
+    graph: nx.DiGraph,
+    node_to_stage: Dict[int, int],
+    stage_sets_list: List[set],
+    pair_bucket: Optional[str],
+    stop_token_id: int,
+    device: torch.device,
+    block_size: int,
+    temperature: float,
+    epsilon: float,
+) -> Dict[str, object]:
     model_was_training = model.training
     if model_was_training:
         model.eval()
@@ -825,8 +961,10 @@ def main() -> None:
     logger.info("Data directory: %s", data_dir)
     logger.info("Pair files: train=%s | eval=%s", train_pair_file, test_pair_file)
     logger.info("Reward type: %s", args.reward_type)
-    logger.info("Prompt template: %s",
-                " ".join(prompt_template_tokens) if prompt_template_tokens else "[symbolic fallback]")
+    logger.info(
+        "Prompt template: %s",
+        " ".join(prompt_template_tokens) if prompt_template_tokens else "[symbolic fallback]",
+    )
     logger.info("Number of stages: %d", num_stages)
     for i, s in enumerate(stages):
         logger.info("  Stage S%d: %d nodes", i + 1, len(s))
@@ -891,8 +1029,11 @@ def main() -> None:
         for p in target_model.parameters():
             p.requires_grad = False
         target_model.eval()
-        logger.info("Target network enabled: EMA=%.4f | sync_interval=%d",
-                    args.target_ema, args.target_sync_interval)
+        logger.info(
+            "Target network enabled: EMA=%.4f | sync_interval=%d",
+            args.target_ema,
+            args.target_sync_interval,
+        )
     else:
         target_model = None
         logger.info("Target network disabled.")
@@ -908,8 +1049,12 @@ def main() -> None:
         sft_ref_model.eval()
         for p in sft_ref_model.parameters():
             p.requires_grad = False
-        logger.info("KL regularization enabled: coef=%.4f | warmup=%d | anneal=%d",
-                    args.kl_coef, args.kl_warmup_iters, args.kl_anneal_iters)
+        logger.info(
+            "KL regularization enabled: coef=%.4f | warmup=%d | anneal=%d",
+            args.kl_coef,
+            args.kl_warmup_iters,
+            args.kl_anneal_iters,
+        )
     else:
         sft_ref_model = None
         logger.info("KL regularization disabled.")
@@ -921,8 +1066,8 @@ def main() -> None:
         device_type="cuda" if device.type == "cuda" else "cpu",
     )
 
-    train_pairs = load_pairs(train_pair_file)
-    eval_pairs = load_pairs(test_pair_file)
+    train_pairs = load_pairs(train_pair_file, prompt_template_tokens)
+    eval_pairs = load_pairs(test_pair_file, prompt_template_tokens)
 
     if not train_pairs:
         raise ValueError(f"No training pairs found in {train_pair_file}")
@@ -938,26 +1083,38 @@ def main() -> None:
     example_source, example_target = train_pairs[0]
     example_prompt_ids = build_prompt(example_source, example_target, stoi, prompt_template_tokens)
     example_prompt_len = len(example_prompt_ids)
+    example_prompt_tokens = format_prompt_tokens(prompt_template_tokens, example_source, example_target)
     example_rollout_cap = safe_max_new_tokens(
         model.config.block_size,
         example_prompt_len,
         args.max_rollout_steps,
     )
-    logger.info("Example prompt length: %d | block_size=%d | rollout cap=%d",
-                example_prompt_len, model.config.block_size, example_rollout_cap)
+    logger.info("Example prompt: %s", " ".join(example_prompt_tokens))
+    logger.info(
+        "Example prompt length: %d | block_size=%d | rollout cap=%d",
+        example_prompt_len,
+        model.config.block_size,
+        example_rollout_cap,
+    )
     if example_rollout_cap < args.max_rollout_steps:
-        logger.warning("max_rollout_steps=%d truncated to %d by block_size.",
-                       args.max_rollout_steps, example_rollout_cap)
+        logger.warning(
+            "max_rollout_steps=%d truncated to %d by block_size.",
+            args.max_rollout_steps,
+            example_rollout_cap,
+        )
 
     all_bucket_names_set: set[str] = set()
     for s, t in train_pairs:
         b = bucket_for_pair(s, t, node_to_stage)
         if b:
             all_bucket_names_set.add(b)
-    all_bucket_names = sorted(all_bucket_names_set, key=lambda k: (
-        int(k.split("->")[0].replace("S", "")),
-        int(k.split("->")[1].replace("S", "")),
-    ))
+    all_bucket_names = sorted(
+        all_bucket_names_set,
+        key=lambda k: (
+            int(k.split("->")[0].replace("S", "")),
+            int(k.split("->")[1].replace("S", "")),
+        ),
+    )
     logger.info("Detected training buckets: %s", all_bucket_names)
 
     model.train()
@@ -1045,7 +1202,9 @@ def main() -> None:
 
                 with torch.no_grad():
                     ref_logits, _ = forward_logits_and_actions(
-                        sft_ref_model, traj_info["traj_ids"], device
+                        sft_ref_model,
+                        traj_info["traj_ids"],
+                        device,
                     )
                 ref_segment = ref_logits[start_idx:start_idx + seq_len, :]
 

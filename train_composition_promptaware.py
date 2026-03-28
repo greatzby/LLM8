@@ -44,7 +44,7 @@ def parse_args() -> argparse.Namespace:
 
 def load_prompt_template(data_dir: Path, meta: dict) -> Optional[List[str]]:
     if isinstance(meta.get("prompt_template_tokens"), list):
-        return meta["prompt_template_tokens"]
+        return [str(x) for x in meta["prompt_template_tokens"]]
 
     tmpl_file = data_dir / "instruction_template.json"
     if tmpl_file.exists():
@@ -52,13 +52,17 @@ def load_prompt_template(data_dir: Path, meta: dict) -> Optional[List[str]]:
             obj = json.load(f)
         tokens = obj.get("prompt_template_tokens")
         if isinstance(tokens, list):
-            return tokens
+            return [str(x) for x in tokens]
     return None
 
 
-def format_prompt_tokens(template_tokens: Optional[List[str]], source: int, target: int) -> List[str]:
+def format_prompt_tokens(
+    template_tokens: Optional[List[str]],
+    source: int,
+    target: int,
+) -> List[str]:
     if not template_tokens:
-        # original symbolic fallback
+        # symbolic fallback
         return [str(source), str(target), str(source)]
 
     out: List[str] = []
@@ -72,6 +76,67 @@ def format_prompt_tokens(template_tokens: Optional[List[str]], source: int, targ
     return out
 
 
+def build_prompt_ids(
+    template_tokens: Optional[List[str]],
+    source: int,
+    target: int,
+    stoi: Dict[str, int],
+) -> List[int]:
+    prompt_tokens = format_prompt_tokens(template_tokens, source, target)
+    missing = [tok for tok in prompt_tokens if tok not in stoi]
+    if missing:
+        raise KeyError(
+            "Prompt tokens missing from vocabulary: "
+            f"{missing}. Rebuild meta.pkl / *.bin from the textualized dataset."
+        )
+    return [stoi[tok] for tok in prompt_tokens]
+
+
+def first_slot_index(template_tokens: Optional[List[str]], slot: str) -> Optional[int]:
+    if not template_tokens:
+        return None
+    for idx, tok in enumerate(template_tokens):
+        if tok == slot:
+            return idx
+    return None
+
+
+def parse_pair_from_line(
+    line: str,
+    prompt_template_tokens: Optional[List[str]],
+) -> Tuple[int, int]:
+    parts = line.strip().split()
+    if len(parts) < 2:
+        raise ValueError(f"Cannot parse pair from short line: {line}")
+
+    # Raw numeric format: "src tgt path..."
+    if parts[0].isdigit() and parts[1].isdigit():
+        return int(parts[0]), int(parts[1])
+
+    # Textualized format: extract source/target from template positions.
+    s_idx = first_slot_index(prompt_template_tokens, "{s}")
+    t_idx = first_slot_index(prompt_template_tokens, "{t}")
+    if s_idx is None or t_idx is None:
+        raise ValueError(
+            "Could not parse textualized pair because prompt_template_tokens are unavailable."
+        )
+
+    needed = max(s_idx, t_idx)
+    if len(parts) <= needed:
+        raise ValueError(
+            f"Line too short to recover source/target from template positions: {line}"
+        )
+
+    s_tok = parts[s_idx]
+    t_tok = parts[t_idx]
+    if not s_tok.isdigit() or not t_tok.isdigit():
+        raise ValueError(
+            f"Template-based pair parsing failed; source/target are not digits. line={line}"
+        )
+
+    return int(s_tok), int(t_tok)
+
+
 def safe_max_new_tokens(block_size: int, prompt_len: int, desired: int) -> int:
     available = block_size - prompt_len - 1
     if available <= 0:
@@ -82,13 +147,28 @@ def safe_max_new_tokens(block_size: int, prompt_len: int, desired: int) -> int:
     return max(1, min(desired, available))
 
 
-def decode_tokens_until_newline(token_ids: List[int], itos: Dict[int, str], stop_id: int) -> List[str]:
+def decode_tokens_until_newline(
+    token_ids: List[int],
+    itos: Dict[int, str],
+    stop_id: int,
+) -> List[str]:
     out: List[str] = []
     for tid in token_ids:
         if tid == stop_id:
             break
         out.append(itos.get(int(tid), "[UNK]"))
     return out
+
+
+def decode_numeric_tokens_strict_until_newline(
+    token_ids: List[int],
+    itos: Dict[int, str],
+    stop_id: int,
+) -> Tuple[Optional[List[int]], List[str]]:
+    decoded_tokens = decode_tokens_until_newline(token_ids, itos, stop_id)
+    if any(not tok.isdigit() for tok in decoded_tokens):
+        return None, decoded_tokens
+    return [int(tok) for tok in decoded_tokens], decoded_tokens
 
 
 @torch.no_grad()
@@ -118,11 +198,9 @@ def evaluate_composition(
     with open(test_file, "r", encoding="utf-8") as f:
         lines = [line.strip() for line in f if line.strip()]
 
-    # raw numeric file expected here
     buckets: Dict[str, List[Tuple[int, int]]] = defaultdict(list)
     for line in lines:
-        parts = line.split()
-        source, target = int(parts[0]), int(parts[1])
+        source, target = parse_pair_from_line(line, prompt_template_tokens)
 
         src_stage = node_to_stage.get(source)
         tgt_stage = node_to_stage.get(target)
@@ -140,8 +218,7 @@ def evaluate_composition(
 
         correct = 0
         for idx, (source, target) in enumerate(cases):
-            prompt_tokens = format_prompt_tokens(prompt_template_tokens, source, target)
-            prompt_ids = [stoi[tok] for tok in prompt_tokens]
+            prompt_ids = build_prompt_ids(prompt_template_tokens, source, target, stoi)
 
             max_new_tokens = safe_max_new_tokens(
                 block_size=model.config.block_size,
@@ -158,31 +235,40 @@ def evaluate_composition(
             )[0].tolist()
 
             new_token_ids = generated[len(prompt_ids):]
-            decoded_tokens = decode_tokens_until_newline(new_token_ids, itos, stop_id)
-            generated_nodes = [int(tok) for tok in decoded_tokens if tok.isdigit()]
-            full_path = [source] + generated_nodes
+            generated_nodes, decoded_tokens = decode_numeric_tokens_strict_until_newline(
+                new_token_ids, itos, stop_id
+            )
 
+            full_path = [source]
             valid = False
-            if len(full_path) >= 2 and full_path[0] == source and full_path[-1] == target:
-                path_valid = all(
-                    G.has_edge(str(full_path[i]), str(full_path[i + 1]))
-                    for i in range(len(full_path) - 1)
-                )
-                if path_valid:
-                    if is_composition:
-                        min_s = min(src_stage_idx, tgt_stage_idx)
-                        max_s = max(src_stage_idx, tgt_stage_idx)
-                        all_intermediates_hit = True
-                        for mid in range(min_s + 1, max_s):
-                            if not any(node in stage_sets[mid] for node in full_path[1:-1]):
-                                all_intermediates_hit = False
-                                break
-                        valid = all_intermediates_hit
-                    else:
-                        valid = True
+
+            if generated_nodes is not None:
+                full_path = [source] + generated_nodes
+
+                if len(full_path) >= 2 and full_path[-1] == target:
+                    path_valid = all(
+                        G.has_edge(str(full_path[i]), str(full_path[i + 1]))
+                        for i in range(len(full_path) - 1)
+                    )
+                    if path_valid:
+                        if is_composition:
+                            min_s = min(src_stage_idx, tgt_stage_idx)
+                            max_s = max(src_stage_idx, tgt_stage_idx)
+                            all_intermediates_hit = True
+                            for mid in range(min_s + 1, max_s):
+                                if not any(node in stage_sets[mid] for node in full_path[1:-1]):
+                                    all_intermediates_hit = False
+                                    break
+                            valid = all_intermediates_hit
+                        else:
+                            valid = True
 
             if verbose and idx < 3:
-                print(f"[{path_type}] {'✓' if valid else '✗'} {source}->{target}: {full_path}")
+                raw = " ".join(decoded_tokens) if decoded_tokens else "[EMPTY]"
+                print(
+                    f"[{path_type}] {'✓' if valid else '✗'} "
+                    f"{source}->{target}: {full_path} | raw={raw}"
+                )
 
             if valid:
                 correct += 1
@@ -211,7 +297,6 @@ def get_batch(
     batch_size: int,
     device: torch.device,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    # keep behavior close to your original script
     data_span = block_size + 1
     num_sequences = len(data) // data_span
     if num_sequences == 0:
@@ -254,7 +339,7 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     logger = get_logger(os.path.join(out_dir, "train.log"))
-    logger.info("Starting prompt-aware GraphA training")
+    logger.info("Starting prompt-aware graph training")
 
     with open(data_dir / "stage_info.pkl", "rb") as f:
         stage_info = pickle.load(f)
@@ -272,7 +357,10 @@ def main() -> None:
     logger.info("Stages: %d", len(stages))
     logger.info("Vocabulary size: %d", vocab_size)
     logger.info("Block size: %d", block_size)
-    logger.info("Prompt template: %s", prompt_template_tokens if prompt_template_tokens else "[symbolic fallback]")
+    logger.info(
+        "Prompt template: %s",
+        " ".join(prompt_template_tokens) if prompt_template_tokens else "[symbolic fallback]",
+    )
 
     train_bin = data_dir / f"train_{args.train_paths_per_pair}.bin"
     val_bin = data_dir / "val.bin"
@@ -281,11 +369,24 @@ def main() -> None:
     if not val_bin.exists():
         raise FileNotFoundError(val_bin)
 
-    # exact evaluator uses raw numeric file if present
     exact_test_file = data_dir / "test_raw.txt"
     if not exact_test_file.exists():
         exact_test_file = data_dir / "test.txt"
     logger.info("Exact evaluation file: %s", exact_test_file)
+
+    try:
+        with open(exact_test_file, "r", encoding="utf-8") as f:
+            for raw in f:
+                raw = raw.strip()
+                if not raw:
+                    continue
+                ex_source, ex_target = parse_pair_from_line(raw, prompt_template_tokens)
+                ex_prompt = format_prompt_tokens(prompt_template_tokens, ex_source, ex_target)
+                logger.info("Example prompt: %s", " ".join(ex_prompt))
+                logger.info("Example prompt length: %d", len(ex_prompt))
+                break
+    except Exception as exc:
+        logger.warning("Could not build example prompt for logging: %s", exc)
 
     train_data = np.memmap(train_bin, dtype=np.uint16, mode="r")
     val_data = np.memmap(val_bin, dtype=np.uint16, mode="r")
