@@ -10,13 +10,31 @@ from pathlib import Path
 from typing import Dict, List
 
 
+RECOMMENDED_TEMPLATE_NAME = "instruction_v2"
+
+INSTRUCTION_V2 = [
+    "instruction", "find", "a", "valid", "path", "from", "node", "{s}",
+    "to", "node", "{t}",
+    "output", "only", "the", "path",
+    "answer", "{s}",
+]
+
 TEMPLATES: Dict[str, List[str]] = {
-    "plain_v1": [
-        "instruction", "find", "a", "valid", "path", "from", "node", "{s}",
-        "to", "node", "{t}",
-        "output", "only", "the", "final", "path",
+    # Recommended rebuttal / final setting:
+    # instruction-like, but no stepwise/intermediate-node hints.
+    "instruction_v2": INSTRUCTION_V2,
+
+    # Backward-compatible alias
+    "plain_v1": INSTRUCTION_V2,
+
+    # Optional lightweight structured baseline
+    "tagged_v1": [
+        "src", "{s}",
+        "tgt", "{t}",
         "answer", "{s}",
     ],
+
+    # Keep this only if you still want ablations.
     "stepwise_v1": [
         "instruction", "find", "a", "path", "from", "node", "{s}",
         "to", "node", "{t}",
@@ -29,11 +47,34 @@ TEMPLATES: Dict[str, List[str]] = {
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Convert numeric GraphA dataset into instruction-style text.")
-    p.add_argument("--src-dir", type=Path, required=True, help="Source dataset dir with train_K.txt and test.txt")
-    p.add_argument("--dest-dir", type=Path, required=True, help="Destination dir for textualized dataset")
-    p.add_argument("--train-paths-per-pair", type=int, default=20, help="Used to locate train_{K}.txt")
-    p.add_argument("--template", type=str, default="stepwise_v1", choices=sorted(TEMPLATES.keys()))
+    p = argparse.ArgumentParser(
+        description="Convert numeric GraphA/GraphNano dataset into instruction-style text."
+    )
+    p.add_argument(
+        "--src-dir",
+        type=Path,
+        required=True,
+        help="Source dataset dir with train_K.txt and test.txt",
+    )
+    p.add_argument(
+        "--dest-dir",
+        type=Path,
+        required=True,
+        help="Destination dir for textualized dataset",
+    )
+    p.add_argument(
+        "--train-paths-per-pair",
+        type=int,
+        default=20,
+        help="Used to locate train_{K}.txt",
+    )
+    p.add_argument(
+        "--template",
+        type=str,
+        default=RECOMMENDED_TEMPLATE_NAME,
+        choices=sorted(TEMPLATES.keys()),
+        help="Prompt template to use. Recommended: instruction_v2",
+    )
     p.add_argument(
         "--copy-patterns",
         nargs="*",
@@ -77,7 +118,8 @@ def convert_numeric_line(line: str, template_tokens: List[str]) -> str:
 
     prompt = format_prompt(template_tokens, source, target)
 
-    # prompt already ends with source after "answer {s}"
+    # The prompt ends with "answer {s}", so the model only needs to generate
+    # the remaining path continuation after the source token.
     continuation = path[1:]
     return " ".join(prompt + continuation)
 
@@ -92,6 +134,10 @@ def convert_file(src_file: Path, dest_file: Path, template_tokens: List[str]) ->
             fout.write(convert_numeric_line(line, template_tokens) + "\n")
             count += 1
     return count
+
+
+def template_to_text(template_tokens: List[str]) -> str:
+    return " ".join(template_tokens)
 
 
 def main() -> None:
@@ -132,9 +178,19 @@ def main() -> None:
     meta = {
         "template_name": args.template,
         "prompt_template_tokens": template_tokens,
+        "prompt_template_text": template_to_text(template_tokens),
+        "prompt_style": (
+            "instruction_like_no_step_hints"
+            if args.template in {"instruction_v2", "plain_v1"}
+            else "tagged_or_ablation"
+        ),
         "notes": (
-            "Prompt already ends with 'answer {s}'. "
-            "The model should generate the remaining path continuation only."
+            "Recommended final setting is instruction_v2: an instruction-style prompt wrapper "
+            "with no intermediate-node hint and no stepwise hint. "
+            "The prompt ends with 'answer {s}', so the model should generate only the remaining "
+            "path continuation tokens after the source token. "
+            "Do NOT reuse old meta.pkl / *.bin from the numeric dataset; rebuild tokenization "
+            "and bins after textualization."
         ),
         "raw_train_file": dest_train_raw.name,
         "raw_test_file": dest_test_raw.name,
@@ -146,16 +202,21 @@ def main() -> None:
     with open(dest_train, "r", encoding="utf-8") as f:
         first_example = f.readline().strip()
 
-    print("=" * 70)
+    print("=" * 80)
     print(f"Textualized dataset written to: {args.dest_dir}")
     print(f"  train text : {dest_train} ({n_train} lines)")
     print(f"  test text  : {dest_test} ({n_test} lines)")
     print(f"  train raw  : {dest_train_raw}")
     print(f"  test raw   : {dest_test_raw}")
     print(f"  template   : {args.template}")
+    print("Prompt template:")
+    print(f"  {template_to_text(template_tokens)}")
     print("Example textualized line:")
     print(first_example)
-    print("=" * 70)
+    print("-" * 80)
+    print("IMPORTANT: rebuild meta.pkl / train_*.bin / val.bin on this textualized dataset.")
+    print("Do NOT reuse tokenization artifacts from the original numeric-only dataset.")
+    print("=" * 80)
 
 
 if __name__ == "__main__":
